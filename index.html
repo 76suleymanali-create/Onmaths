@@ -134,6 +134,8 @@ header nav a:hover{background:color-mix(in srgb,var(--band-ink) 15%,transparent)
 .hwon{margin:12px 0 4px}
 .trk-imp{font:700 .9rem var(--body);border:2px solid var(--ink);border-radius:999px;padding:8px 14px;background:var(--hi);color:var(--hi-ink);cursor:pointer;margin-left:auto}
 .sendst{font-weight:800}
+.et-result code,.hw-code{word-break:break-all;overflow-wrap:anywhere;white-space:normal;max-width:100%}
+.hwbody,.hwform,.etq{min-width:0;overflow-wrap:anywhere}
 .codebox summary{cursor:pointer;font-size:.9rem;opacity:.85}
 .hw-go-now{display:block;width:100%;font:800 1.1rem var(--body);border:3px solid var(--ink);border-radius:16px;padding:16px;margin:0 0 14px;background:var(--hi);color:var(--hi-ink);cursor:pointer;box-shadow:4px 4px 0 var(--ink)}
 .hw-open{font:700 .95rem var(--body);border:2px solid var(--ink);border-radius:999px;padding:10px 16px;background:var(--hi);color:var(--hi-ink);cursor:pointer}
@@ -608,6 +610,7 @@ footer b{color:var(--ink);font-family:var(--display)}
       </div>
       <div class="gbar"><label for="gsel-hw">Group</label><select id="gsel-hw" class="gsel"></select></div><div class="tabs pills" role="tablist" aria-label="Homework group" id="hwTabs" hidden></div>
       <div class="hwlist" id="hwlist"></div>
+      <div class="hwlist" id="paplist"></div>
     </div>
   </section>
 
@@ -976,7 +979,7 @@ const MK = (() => {
   const SUP = {"⁰":"0","¹":"1","²":"2","³":"3","⁴":"4","⁵":"5","⁶":"6","⁷":"7","⁸":"8","⁹":"9","⁻":"-"};
   const VULG = {"½":" 1/2","¼":" 1/4","¾":" 3/4","⅓":" 1/3","⅔":" 2/3","⅕":" 1/5","⅛":" 1/8"};
   function pre(s){
-    s = String(s).trim().replace(/[−–—]/g, "-").replace(/[×·]/g, "*").replace(/÷/g, "/").replace(/\bpi\b/gi, "π").replace(/sqrt/gi, "√");
+    s = String(s).trim().replace(/[−–—]/g, "-").replace(/[×·]/g, "*").replace(/÷/g, "/").replace(/(\d|\b)pi\b/gi, "$1π").replace(/sqrt/gi, "√");
     s = s.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁻]+/g, m => "^(" + [...m].map(c => SUP[c]).join("") + ")");
     return s.replace(/[½¼¾⅓⅔⅕⅛]/g, c => VULG[c]);
   }
@@ -1782,51 +1785,78 @@ function sendResult(type, g, i, marks, max, code, topic, box){
 }
 /* ===== Online homework: auto-marked, with a result code for the tracker ===== */
 const hwStoreKey = (g, i) => `onmaths-hw-${g}-${i}`;
+/*OPAPERS*/ let OPAPERS = [{"id": "Y11-Set2-Baseline-wc19Oct", "title": "Baseline paper 1", "student": "Year 11 Set 2 (all pupils)", "group": "y11s2", "week": "w/c 19 Oct 2026", "calc": false, "questions": [{"q": "Solve the simultaneous equations 3x + 2y = 16 and x − y = 2", "marks": 3, "topic": "Simultaneous equations", "key": [["num", 4, "x"], ["num", 2, "y"]]}, {"q": "Factorise x² + 5x − 14", "marks": 2, "topic": "Quadratics", "key": [["fac", "(x+7)(x-2)"]]}, {"q": "Solve x² − 9x + 20 = 0", "marks": 2, "topic": "Quadratics", "key": [["set", [4, 5], "Solutions (both)"]]}, {"q": "Write 360 as a product of its prime factors in index form.", "marks": 2, "topic": "Number", "key": [["s", ["2^3*3^2*5", "2^(3)*3^(2)*5", "5*2^3*3^2", "3^2*2^3*5", "2^(3)*3^(2)*5^(1)", "2^3x3^2x5", "2^(3)x3^(2)x5"], "Index form"]]}, {"q": "Work out 125^{2/3}", "marks": 2, "topic": "Indices", "key": [["num", 25]]}, {"q": "Simplify (3x²y)³", "marks": 2, "topic": "Indices", "key": [["simp", "27x^6y^3"]]}, {"q": "Write 0.00045 in standard form.", "marks": 1, "topic": "Standard form", "key": [["sf", 0.00045]]}, {"q": "Work out (6 × 10^{5}) × (4 × 10^{−2}). Give your answer in standard form.", "marks": 2, "topic": "Standard form", "key": [["sf", 24000]]}, {"q": "Without a calculator, find the value of sin 30° + cos 60°.", "marks": 2, "topic": "Trigonometry", "key": [["num", 1]]}, {"q": "A right-angled triangle has hypotenuse 10 cm and an angle of 30°. Find the side opposite the 30° angle.", "marks": 2, "topic": "Trigonometry", "key": [["num", 5, "Length (cm)"]]}, {"q": "y is directly proportional to x². y = 48 when x = 4. Find y when x = 5.", "marks": 3, "topic": "Proportion", "key": [["num", 75, "y"]]}, {"q": "6 workers take 10 days to build a wall. How long would 4 workers take, working at the same rate?", "marks": 2, "topic": "Proportion", "key": [["num", 15, "Days"]]}, {"q": "P(rain) = 0.3 on each day, independently. Work out the probability that it rains on exactly one of two days.", "marks": 3, "topic": "Probability trees", "key": [["num", 0.42]]}, {"q": "A bag has 4 red and 2 blue counters. Two counters are taken without replacement. Work out P(both red).", "marks": 3, "topic": "Probability trees", "key": [["num", "2/5"]]}, {"q": "£400 is invested at 5% compound interest per year. Work out its value after 2 years.", "marks": 3, "topic": "Compound interest", "key": [["num", 441, "Value (£)"]]}, {"q": "After a 25% increase, a price is £150. Work out the price before the increase.", "marks": 2, "topic": "Reverse percentages", "key": [["num", 120, "Price (£)"]]}, {"q": "A sector has radius 6 cm and angle 120°. Find its area in terms of π.", "marks": 3, "topic": "Arcs & sectors", "key": [["num", "12π", "Area (cm²)"]]}, {"q": "A cylinder has radius 3 cm and height 10 cm. Find its volume in terms of π.", "marks": 2, "topic": "Volume", "key": [["num", "90π", "Volume (cm³)"]]}, {"q": "A rectangle has width x cm and length (x + 4) cm. Its area is 32 cm². Find x.", "marks": 4, "topic": "Quadratics", "key": [["num", 4, "x"]]}, {"q": "Expand and simplify (2x + 3)(x − 5)", "marks": 2, "topic": "Algebra", "key": [["simp", "2x^2-7x-15"]]}, {"q": "2 adult tickets and 3 child tickets cost £31. 1 adult ticket and 2 child tickets cost £18. Work out the cost of each ticket.", "marks": 4, "topic": "Simultaneous equations", "key": [["num", 8, "Adult ticket (£)"], ["num", 5, "Child ticket (£)"]]}, {"q": "(Stretch) Solve 2x² + 5x − 3 = 0", "marks": 3, "topic": "Quadratics", "key": [["set", [0.5, -3], "Solutions (both)"]]}]}, {"id": "Y11-Set4-Baseline-wc19Oct", "title": "Baseline paper 1", "student": "Year 11 Set 4 (all pupils)", "group": "y11s4", "week": "w/c 19 Oct 2026", "calc": false, "questions": [{"q": "Write 0.7 as a percentage.", "marks": 1, "topic": "Fractions, decimals & %", "key": [["num", 70, "Percentage"]]}, {"q": "Work out 15% of 60", "marks": 2, "topic": "Percentages", "key": [["num", 9]]}, {"q": "Share £45 in the ratio 2 : 3", "marks": 2, "topic": "Ratio", "key": [["num", 18, "First share (£)"], ["num", 27, "Second share (£)"]]}, {"q": "Solve 4x − 7 = 21", "marks": 2, "topic": "Linear equations", "key": [["num", 7, "x"]]}, {"q": "Simplify 5a + 3b − 2a + b", "marks": 2, "topic": "Algebra", "key": [["simp", "3a+4b"]]}, {"q": "Work out 2/3 + 1/4", "marks": 2, "topic": "Fractions", "key": [["num", "11/12"]]}, {"q": "A coat costs £80. The price increases by 10%. Work out the new price.", "marks": 2, "topic": "Percentages", "key": [["num", 88, "New price (£)"]]}, {"q": "Work out the area of a triangle with base 10 cm and height 7 cm.", "marks": 2, "topic": "Area", "key": [["num", 35, "Area (cm²)"]]}, {"q": "Solve 3(x + 4) = 27", "marks": 3, "topic": "Linear equations", "key": [["num", 5, "x"]]}, {"q": "A rectangle is 9 cm wide and 12 cm long. Work out the length of its diagonal.", "marks": 3, "topic": "Pythagoras", "key": [["num", 15, "Diagonal (cm)"]]}, {"q": "A bag has 3 red, 5 blue and 2 green counters. A counter is taken at random. Find P(not blue).", "marks": 2, "topic": "Probability", "key": [["num", "1/2"]]}, {"q": "P(a spinner lands on red) = 0.35. The spinner is spun 200 times. Work out the expected number of reds.", "marks": 2, "topic": "Probability", "key": [["num", 70]]}, {"q": "Find the gradient of the line through (1, 3) and (4, 12).", "marks": 2, "topic": "Straight-line graphs", "key": [["num", 3, "Gradient"]]}, {"q": "Write the equation of the line with gradient 3 that crosses the y-axis at (0, −2).", "marks": 1, "topic": "Straight-line graphs", "key": [["yeq", "3x-2"]]}, {"q": "In a sale, prices are reduced by 20%. A jumper costs £48 in the sale. Work out its normal price.", "marks": 3, "topic": "Reverse percentages", "key": [["num", 60, "Normal price (£)"]]}, {"q": "Work out 1⅔ × 2¼. Give your answer as a mixed number.", "marks": 3, "topic": "Fractions", "key": [["s", ["3 3/4", "3¾", "3and3/4"], "Mixed number"]]}, {"q": "A circle has radius 5 cm. Work out its area. Give your answer in terms of π.", "marks": 2, "topic": "Circles", "key": [["num", "25π", "Area (cm²)"]]}, {"q": "Boys : girls in a club = 3 : 4. There are 12 more girls than boys. How many people are in the club?", "marks": 3, "topic": "Ratio", "key": [["num", 84, "People"]]}, {"q": "Solve 5x + 3 = 2x + 18", "marks": 3, "topic": "Linear equations", "key": [["num", 5, "x"]]}, {"q": "A trapezium has parallel sides 6 cm and 10 cm. Its height is 4 cm. Work out its area.", "marks": 2, "topic": "Area", "key": [["num", 32, "Area (cm²)"]]}, {"q": "Work out 3/4 ÷ 3/8", "marks": 2, "topic": "Fractions", "key": [["num", 2]]}, {"q": "A car's value falls from £8 000 to £6 000. Work out the percentage decrease.", "marks": 3, "topic": "Percentages", "key": [["num", 25, "Percentage decrease"]]}, {"q": "A 5 m ladder leans against a wall. Its foot is 3 m from the wall. How high up the wall does it reach?", "marks": 2, "topic": "Pythagoras", "key": [["num", 4, "Height (m)"]]}, {"q": "Two fair coins are thrown. Find the probability that both land on heads.", "marks": 2, "topic": "Probability", "key": [["num", "1/4"]]}]}]; /*END-OPAPERS*/
+const papKind = P => /^baseline/i.test(P.title) ? "B" : "P", papNum = P => +((String(P.title).match(/(\d+)\s*$/) || [0, 1])[1]);
+const papById = id => OPAPERS.find(p => p.id === id);
+function formSpec(box){
+  if (box.dataset.pap){ const P = papById(box.dataset.pap), K = papKind(P);
+    return { qs: P.questions, store: `onmaths-pap-${P.id}`, g: P.group, i: papNum(P) - 1, type: K, label: K === "B" ? "Baseline paper" : "Exam paper", topic: P.title, mark: "Mark my paper" } }
+  const g = box.dataset.g, i = +box.dataset.i, I = hwInfo(g, i), key = HKEYS[box.dataset.b];
+  return { qs: I.hw.map((q, k) => ({ q: q[0], marks: q[1], key: key[k] })), store: hwStoreKey(g, i), g, i, type: "H", label: "Homework", topic: I.topic, mark: "Mark my homework" };
+}
+let formUid = 0;
 function drawHwForm(box){
-  const g = box.dataset.g, i = +box.dataset.i, b = box.dataset.b, I = hwInfo(g, i), key = HKEYS[b], form = box.querySelector(".hwform"); let saved = null;
-  try { saved = JSON.parse(localStorage.getItem(hwStoreKey(g, i)) || "null") } catch(e){}
+  const S = formSpec(box), form = box.querySelector(".hwform"), u = box.dataset.uid || (box.dataset.uid = "f" + (++formUid)); let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(S.store) || "null") } catch(e){}
   const pad = `<div class="keys" aria-label="Maths symbols">${["−","/","√","π","²","³","±","≤","≥","(",")",":"].map(k => `<button type="button" data-hkey="${k}" tabindex="-1">${k}</button>`).join("")}</div>`;
   let h = `<p class="tiernote" style="margin:0">Type your final answers. Do your working on paper first.</p>`;
-  h += I.hw.map((q, k) => `<div class="etq" id="hq-${g}-${i}-${k}"><div class="qt">${k + 1}. ${fmt(q[0])} <span class="mk">(${q[1]} mark${q[1] > 1 ? "s" : ""})</span></div>` + key[k].map((part, j) => {
-      const id = `hw-${g}-${i}-${k}-${j}`, val = saved ? (saved.a[k][j] ?? "") : "", lab = part[2] ? `<label for="${id}">${esc(part[2])}</label>` : `<label for="${id}" class="sr">Answer</label>`;
+  h += S.qs.map((q, k) => `<div class="etq"><div class="qt">${k + 1}. ${fmt(q.q)} <span class="mk">(${q.marks} mark${q.marks > 1 ? "s" : ""})</span></div>` + q.key.map((part, j) => {
+      const id = `${u}-${k}-${j}`, val = saved ? (saved.a[k][j] ?? "") : "", lab = part[2] ? `<label for="${id}">${esc(part[2])}</label>` : `<label for="${id}" class="sr">Answer</label>`;
       if (part[0] === "mc") return `<div class="etp" role="group" aria-label="${esc(part[2] || "Choose")}">${part[3].map(o => `<button type="button" class="opt hopt" data-k="${k}" data-j="${j}" data-v="${esc(o)}" aria-pressed="${val === o}"${saved ? " disabled" : ""}>${esc(o)}</button>`).join("")}</div>`;
       return `<div class="etp">${lab}<input id="${id}" data-k="${k}" data-j="${j}" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(val)}"${saved ? " disabled" : ""}></div>`;
     }).join("") + `<div class="res" hidden></div></div>`).join("");
-  if (!saved) h += pad + nameField() + `<button type="button" class="et-go hw-mark">Mark my homework</button>`;
+  if (!saved) h += pad + nameField() + `<button type="button" class="et-go hw-mark">${S.mark}</button>`;
   h += `<div class="hw-result"></div>`;
-  form.innerHTML = h; form.hidden = false; box.querySelector(".hw-open").hidden = true;
+  form.innerHTML = h; form.hidden = false; const ob = box.querySelector(".hw-open"); if (ob) ob.hidden = true;
   if (saved) hwResult(box, saved.a);
 }
-function hwCollect(box){ const g = box.dataset.g, i = +box.dataset.i, key = HKEYS[box.dataset.b];
-  return key.map((q, k) => q.map((part, j) => part[0] === "mc" ? ((box.querySelector(`.hopt[data-k="${k}"][data-j="${j}"][aria-pressed="true"]`) || {}).dataset || {}).v || "" : (box.querySelector(`input[data-k="${k}"][data-j="${j}"]`) || {}).value || "")) }
+function hwCollect(box){ const S = formSpec(box);
+  return S.qs.map((q, k) => q.key.map((part, j) => part[0] === "mc" ? ((box.querySelector(`.hopt[data-k="${k}"][data-j="${j}"][aria-pressed="true"]`) || {}).dataset || {}).v || "" : (box.querySelector(`input[data-k="${k}"][data-j="${j}"]`) || {}).value || "")) }
 function hwResult(box, answers){
-  const g = box.dataset.g, i = +box.dataset.i, key = HKEYS[box.dataset.b], hw = hwInfo(g, i).hw;
-  const marks = key.map((q, k) => { const n = q.map((part, j) => MK.check(part, answers[k][j])).filter(Boolean).length; return Math.floor(hw[k][1] * n / q.length) });
-  box.querySelectorAll(".etq").forEach((el, k) => { const r = el.querySelector(".res"), full = marks[k] === hw[k][1]; r.hidden = false; r.className = "res " + (full ? "ok" : "no");
-    r.innerHTML = (full ? "✓ Correct" : marks[k] ? `◐ ${marks[k]} of ${hw[k][1]} marks` : "✗ Not quite") + ` · ${marks[k]}/${hw[k][1]}` + (full ? "" : `<br>Answer: <span>${key[k].map(p => fmt(MK.shown(p))).join(" · ")}</span>`) });
-  const got = marks.reduce((a, b) => a + b, 0), max = hw.reduce((a, q) => a + q[1], 0), code = makeCode(g, i, marks, "H");
+  const S = formSpec(box);
+  const marks = S.qs.map((q, k) => { const n = q.key.map((part, j) => MK.check(part, answers[k][j])).filter(Boolean).length; return Math.min(9, Math.floor(q.marks * n / q.key.length)) });
+  box.querySelectorAll(".etq").forEach((el, k) => { const q = S.qs[k], r = el.querySelector(".res"), full = marks[k] === q.marks; r.hidden = false; r.className = "res " + (full ? "ok" : "no");
+    r.innerHTML = (full ? "✓ Correct" : marks[k] ? `◐ ${marks[k]} of ${q.marks} marks` : "✗ Not quite") + ` · ${marks[k]}/${q.marks}` + (full ? "" : `<br>Answer: <span>${q.key.map(p => fmt(MK.shown(p))).join(" · ")}</span>`) });
+  const got = marks.reduce((a, b) => a + b, 0), max = S.qs.reduce((a, q) => a + q.marks, 0), code = makeCode(S.g, S.i, marks, S.type);
   box.querySelector(".hw-result").innerHTML = `<div class="et-result"><div class="score">${got} / ${max}</div><div>${got === max ? "Brilliant, full marks!" : got / max >= 0.7 ? "Well done. Check the answers above for anything you missed." : "Good try. Look at the answers above and ask Mr Ali about anything you're unsure of."}</div>
+    ${S.type !== "H" ? `<div class="tiernote" style="color:inherit;opacity:.85">Only your final answers are marked here. Mr Ali may give extra marks for your working.</div>` : ""}
     ${sendBlock(code, 'class="hw-code"')}<button type="button" class="et-retry hw-retry">↻ Clear and try again</button></div>`;
-  sendResult("Homework", g, i, marks, max, code, hwInfo(g, i).topic, box);
+  sendResult(S.label, S.g, S.i, marks, max, code, S.topic, box);
 }
 let hwLastInput = null;
-hwlist.addEventListener("focusin", e => { if (e.target.matches(".hwform input[data-k]")) hwLastInput = e.target });
-hwlist.addEventListener("click", e => {
+document.addEventListener("focusin", e => { if (e.target.matches(".hwform input[data-k]")) hwLastInput = e.target });
+document.addEventListener("click", e => {
   const box = e.target.closest(".hwon"); if (!box) return;
   if (e.target.closest(".hw-open")){ drawHwForm(box); return }
   const o = e.target.closest(".hopt"); if (o && !o.disabled){ box.querySelectorAll(`.hopt[data-k="${o.dataset.k}"][data-j="${o.dataset.j}"]`).forEach(b => b.setAttribute("aria-pressed", b === o)); return }
   const kb = e.target.closest("[data-hkey]"); if (kb){ const inp = (hwLastInput && box.contains(hwLastInput)) ? hwLastInput : box.querySelector("input[data-k]:not([disabled])"); if (!inp) return;
     const v = kb.dataset.hkey === "−" ? "-" : kb.dataset.hkey, a = inp.selectionStart ?? inp.value.length, b = inp.selectionEnd ?? a;
     inp.value = inp.value.slice(0, a) + v + inp.value.slice(b); inp.focus(); try { inp.setSelectionRange(a + v.length, a + v.length) } catch(err){} return }
-  if (e.target.closest(".hw-mark")){ const ans = hwCollect(box); if (!needName(box)) return;
+  if (e.target.closest(".hw-mark")){ const ans = hwCollect(box);
     if (ans.flat().every(v => !String(v).trim())){ toast("Answer at least one question first."); return }
-    try { localStorage.setItem(hwStoreKey(box.dataset.g, +box.dataset.i), JSON.stringify({ a: ans })) } catch(err){}
+    if (!needName(box)) return;
+    try { localStorage.setItem(formSpec(box).store, JSON.stringify({ a: ans })) } catch(err){}
     drawHwForm(box); box.querySelector(".hw-result").scrollIntoView({ behavior: "smooth", block: "nearest" }); return }
   if (e.target.closest(".copy-code")){ const c = box.querySelector(".hw-code").textContent;
-    try { navigator.clipboard.writeText(c).then(() => toast("Code copied. Send it to Mr Ali."), () => { selectEl(box.querySelector(".hw-code")); toast("Press and hold the code to copy it.") }) } catch(err){ selectEl(box.querySelector(".hw-code")); toast("Press and hold the code to copy it.") } return }
+    try { navigator.clipboard.writeText(c).then(() => toast("Code copied."), () => { selectEl(box.querySelector(".hw-code")); toast("Press and hold the code to copy it.") }) } catch(err){ selectEl(box.querySelector(".hw-code")); toast("Press and hold the code to copy it.") } return }
   const rt = e.target.closest(".hw-retry"); if (rt){ if (!rt.dataset.sure){ rt.dataset.sure = "1"; rt.textContent = "Tap again to clear your answers"; return }
-    try { localStorage.removeItem(hwStoreKey(box.dataset.g, +box.dataset.i)) } catch(err){} drawHwForm(box); toast("Cleared. Have another go!") }
+    try { localStorage.removeItem(formSpec(box).store) } catch(err){} drawHwForm(box); toast("Cleared. Have another go!") }
 });
+/* ===== Online exam papers (baseline + weekly), auto-marked ===== */
+const paplist = document.getElementById("paplist");
+const pnorm = x => String(x || "").trim().toLowerCase().split(/\s+/)[0] || "";
+function papersFor(g){ const me = pnorm(myName());
+  return OPAPERS.filter(P => P.group === g && Array.isArray(P.questions) && P.questions.length && P.questions.every(q => Array.isArray(q.key) && q.key.length) && (TEACHER || /all pupils/i.test(P.student) || (me && pnorm(P.student) === me))).sort((a, b) => (papKind(a) === "B" ? -1 : 0) - (papKind(b) === "B" ? -1 : 0) || papNum(b) - papNum(a)) }
+function renderPapers(g){
+  if (!paplist) return; const L = papersFor(g);
+  if (!L.length){ paplist.innerHTML = ""; return }
+  paplist.innerHTML = `<h3 class="hw-h">Exam papers</h3><p class="tiernote" style="margin:0 0 6px">Do these like a real exam: 1 hour, working on paper${TEACHER ? "" : ", then type your answers"}.</p>` + L.map((P, k) => {
+    const tot = P.questions.reduce((a, q) => a + q.marks, 0);
+    return `<details class="hwk${k === 0 ? " current" : ""}"${k === 0 && !TEACHER ? " open" : ""}><summary><span class="num">${papKind(P) === "B" ? "Baseline" : "Paper"}</span><span class="dt">${esc(P.week || "")}</span><span class="tp">${esc(P.title)}${TEACHER ? " · " + esc(P.student) : ""}</span><span class="status ready">${P.calc ? "Calculator" : "Non-calculator"}</span></summary><div class="hwbody"><p class="tiernote" style="margin:4px 0 8px">${P.questions.length} questions · ${tot} marks · 1 hour · ${P.calc ? "you may use a calculator" : "no calculator"}</p><div class="hwon" data-pap="${esc(P.id)}"><button type="button" class="hw-open">👉 Press here to start this paper</button><div class="hwform" hidden></div></div></div></details>`;
+  }).join("");
+}
+{ const rh = renderHw; renderHw = gid => { rh(gid); renderPapers(gid) } }
+fetch("papers.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : []).then(L => { if (!Array.isArray(L)) return; L.forEach(P => { if (P && P.id && !papById(P.id)) OPAPERS.push(P) }); if (hwGroup) renderPapers(hwGroup) }).catch(() => {});
 /* ===== My group ===== */
 const groupPills = document.getElementById("groupPills");
 groupPills.innerHTML = HWGROUPS.map(([id, n]) => `<button type="button" id="mg-${id}" data-id="${id}" aria-pressed="false">${n}</button>`).join("");
@@ -1905,10 +1935,10 @@ const CODEG = Object.fromEntries(Object.entries(GCODE).map(([k, v]) => [v, k]));
 const ckLetter = s => { let h = 7; for (const c of "OnMaths|" + s) h = (h * 31 + c.charCodeAt(0)) % 9973; return "ABCDEFGHJKMNPQRSTUVWXYZ"[h % 23]; };
 const makeCode = (g, i, marks, t) => { const b = `${GCODE[g]}-${t || "W"}${i + 1}-${marks.join("")}`; return b + "-" + ckLetter(b); };
 function readCode(raw){
-  const m = String(raw).toUpperCase().replace(/\s+/g, "").match(/^(Y\d+(?:S\d|FM)?)-([WH])(\d+)-(\d{1,9})-([A-Z])$/);
+  const m = String(raw).toUpperCase().replace(/\s+/g, "").match(/^(Y\d+(?:S\d|FM)?)-([WHBP])(\d+)-(\d{1,40})-([A-Z])$/);
   if (!m || !CODEG[m[1]]) return null;
   const base = `${m[1]}-${m[2]}${m[3]}-${m[4]}`; if (ckLetter(base) !== m[5]) return null;
-  return { g: CODEG[m[1]], i: +m[3] - 1, marks: [...m[4]].map(Number), hw: m[2] === "H" };
+  return { g: CODEG[m[1]], i: +m[3] - 1, marks: [...m[4]].map(Number), hw: m[2] === "H", t: m[2] };
 }
 let etGroup = "y11s4", etLastInput = null;
 const etWeekSel = document.getElementById("etWeek"), etBox = document.getElementById("etBox");
@@ -1990,11 +2020,31 @@ if (TEACHER){
   const nav = document.querySelector("nav"); if (nav && !nav.querySelector('a[href="#tracker"]')){ const a = document.createElement("a"); a.href = "#tracker"; a.textContent = "Tracker"; nav.appendChild(a) }
   document.getElementById("trkGroup").innerHTML = HWGROUPS.map(([id, n]) => `<option value="${id}">${n}</option>`).join("");
   const status = document.getElementById("trkStatus"), pillsEl = document.getElementById("trkStudents"), panel = document.getElementById("trkPanel"), ov = document.getElementById("trkOverview");
-  let db = null, students = [], scores = {}, hws = {}, sel = null, pendingDel = null, show = "all";
+  let db = null, students = [], scores = {}, hws = {}, paps = {}, sel = null, pendingDel = null, show = "all";
   const showEl = document.getElementById("trkShow"); showEl.innerHTML = `<option value="all">All groups</option>` + HWGROUPS.map(([id, n]) => `<option value="${id}">${n}</option>`).join("");
   showEl.addEventListener("change", () => { show = showEl.value; if (show !== "all"){ document.getElementById("trkGroup").value = show; const cur = students.find(x => x.id === sel); if (cur && cur.group !== show) sel = null } renderPills(); renderOverview(); renderPanel() });
   const vis = st => show === "all" || st.group === show;
   const pctClass = p => p >= 70 ? "pg" : p >= 40 ? "pa" : "pr";
+  function paperFor(c, st){ const L = OPAPERS.filter(P => P.group === c.g && papKind(P) === c.t && papNum(P) === c.i + 1 && Array.isArray(P.questions));
+    return L.find(P => pnorm(P.student) === pnorm(st.name)) || L.find(P => /all pupils/i.test(P.student)) || L[0] || null }
+  async function applyCode(c, st){
+    if (c.t === "B" || c.t === "P"){ const P = paperFor(c, st); if (!P || P.questions.length !== c.marks.length) return { err: "That paper code doesn't match a paper on the site." };
+      const row = c.marks.map((m, k) => Math.min(m, P.questions[k].marks)), got = row.reduce((a, b) => a + b, 0), max = P.questions.reduce((a, q) => a + q.marks, 0), key = c.t + (c.i + 1);
+      if (JSON.stringify((paps[st.id] || {})[key]) === JSON.stringify(row)) return { same: true };
+      (paps[st.id] = paps[st.id] || {})[key] = row;
+      if (pnorm(P.student) === pnorm(st.name)){ try { await db.doc("papers/" + P.id).update({ score: got }) } catch(e){} }
+      return { msg: `${P.title}: ${got}/${max}` } }
+    if (c.hw){ const H = hwInfo(c.g, c.i).hw; if (!H || c.marks.length !== H.length) return { err: "That homework code doesn't match a homework sheet." };
+      const row = c.marks.map((m, k) => Math.min(m, H[k][1])); if (JSON.stringify((hws[st.id] || {})[c.i]) === JSON.stringify(row)) return { same: true };
+      (hws[st.id] = hws[st.id] || {})[c.i] = row; return { msg: `homework "${topicOf(c.g, c.i)}": ${row.reduce((a, b) => a + b, 0)}/${H.reduce((a, q) => a + q[1], 0)}` } }
+    const et = etOf(c.g, c.i); if (!et || et.length !== c.marks.length) return { err: "That week has no exit ticket." };
+    const row = c.marks.map((m, k) => Math.min(m, et[k][1])); if (JSON.stringify((scores[st.id] || {})[c.i]) === JSON.stringify(row)) return { same: true };
+    (scores[st.id] = scores[st.id] || {})[c.i] = row; return { msg: `exit ticket week ${c.i + 1}: ${row.reduce((a, b) => a + b, 0)}/${et.reduce((a, q) => a + q[1], 0)}` };
+  }
+  function papStats(st){ const sc = paps[st.id] || {}, rows = [];
+    for (const k in sc){ const c = { g: st.group, t: k[0], i: +k.slice(1) - 1 }, P = paperFor(c, st); if (!P || !Array.isArray(sc[k])) continue;
+      const got = sc[k].reduce((a, v) => a + (+v || 0), 0), max = P.questions.reduce((a, q) => a + q.marks, 0); rows.push({ title: P.title, week: P.week || "", got, max, pct: Math.round(100 * got / max) }) }
+    return rows }
   function hwStats(st){
     const sc = hws[st.id] || {}, rows = [];
     for (const k in sc){ const i = +k, H = hwInfo(st.group, i).hw; if (!H || !Array.isArray(sc[k])) continue; const got = sc[k].reduce((a, v) => a + (+v || 0), 0), max = H.reduce((a, q) => a + q[1], 0); rows.push({ i, got, max, pct: Math.round(100 * got / max) }) }
@@ -2042,12 +2092,13 @@ if (TEACHER){
     }).join("");
     { const HS = hwStats(st);
       h += `<h4 style="margin:16px 0 6px">Homework done online</h4>` + (HS.rows.length ? `<div class="trk-hw">${HS.rows.map(r => `<div class="trk-wk"><div class="row"><span class="dt">${esc(dLabel(st.group, r.i))}</span><span class="tp">${esc(topicOf(st.group, r.i))}</span><span class="pct ${pctClass(r.pct)}">${r.got}/${r.max} · ${r.pct}%</span></div></div>`).join("")}</div>` : `<p class="tiernote" style="margin:0">No homework codes yet. Paste a homework code above (it starts with ${GCODE[st.group]}-H).</p>`) }
+    { const PR = papStats(st); if (PR.length) h += `<h4 style="margin:16px 0 6px">Exam papers done online</h4><div class="trk-hw">${PR.map(r => `<div class="trk-wk"><div class="row"><span class="dt">${esc(r.week)}</span><span class="tp">${esc(r.title)}</span><span class="pct ${pctClass(r.pct)}">${r.got}/${r.max} · ${r.pct}%</span></div></div>`).join("")}</div>` }
     h += `<p style="margin-top:12px"><button type="button" class="trk-del" id="trkDel">${pendingDel === st.id ? "Tap again to remove " + esc(st.name) + " and their scores" : "Remove this student"}</button></p>`;
     panel.innerHTML = h;
   }
   const saveTimers = {};
   async function saveScores(id){
-    try { await db.doc("scores/" + id).set({ weeks: scores[id] || {}, hw: hws[id] || {} }); status.textContent = "Saved." }
+    try { await db.doc("scores/" + id).set({ weeks: scores[id] || {}, hw: hws[id] || {}, pap: paps[id] || {} }); status.textContent = "Saved." }
     catch(e){ status.textContent = "Couldn't save. Check your connection and try again." }
   }
   async function saveStudents(){ try { await db.doc("tracker/students").set({ list: students }) } catch(e){ status.textContent = "Couldn't save the student list. Check your connection." } }
@@ -2080,13 +2131,8 @@ if (TEACHER){
       const st = students.find(x => x.id === sel), c = readCode(document.getElementById("trkCode").value);
       if (!c){ status.textContent = "That code isn't valid. Check it was copied exactly, e.g. Y11S4-W1-212-K."; return }
       if (c.g !== st.group){ status.textContent = `That code is for ${gname(c.g)}, but ${st.name} is in ${gname(st.group)}. Pick the right student.`; return }
-      if (c.hw){ const H = hwInfo(c.g, c.i).hw; if (!H || c.marks.length !== H.length){ status.textContent = "That homework code doesn't match a homework sheet."; return }
-        const row = c.marks.map((m, k) => Math.min(m, H[k][1])); (hws[sel] = hws[sel] || {})[c.i] = row; renderPanel(); renderOverview(); status.textContent = "Saving…"; await saveScores(sel);
-        status.textContent = `Added homework "${topicOf(c.g, c.i)}" for ${st.name}: ${row.reduce((a, b) => a + b, 0)}/${H.reduce((a, q) => a + q[1], 0)}. Saved.`; return }
-      const et = etOf(c.g, c.i); if (!et){ status.textContent = "That week has no exit ticket."; return }
-      const row = c.marks.map((m, k) => Math.min(m, et[k][1]));
-      (scores[sel] = scores[sel] || {})[c.i] = row; renderPanel(); renderOverview(); status.textContent = "Saving…"; await saveScores(sel);
-      status.textContent = `Added week ${c.i + 1} for ${st.name}: ${row.reduce((a, b) => a + b, 0)}/${et.reduce((a, q) => a + q[1], 0)}. Saved.`; return }
+      const R = await applyCode(c, st); if (R.err){ status.textContent = R.err; return } if (R.same){ status.textContent = "That result is already saved."; return }
+      renderPanel(); renderOverview(); status.textContent = "Saving…"; await saveScores(sel); status.textContent = `Added ${R.msg} for ${st.name}. Saved.`; return }
     if (!e.target.closest("#trkDel")) return;
     if (pendingDel !== sel){ pendingDel = sel; renderPanel(); return }
     const id = sel; students = students.filter(x => x.id !== id); delete scores[id]; sel = null; pendingDel = null;
@@ -2098,6 +2144,7 @@ if (TEACHER){
     const mcp = window.claude && window.claude.use ? await window.claude.use("mcp").catch(() => null) : null;
     if (!mcp){ if (!auto) status.textContent = "Google Sheets can't be reached from this view. Open the teacher site in claude.ai, or paste codes instead."; return }
     btn.disabled = true; status.textContent = "Getting students' results…"; let rows;
+    try { const qs = await db.collection("papers").get(); qs.docs.forEach(d => { const P = JSON.parse(JSON.stringify(d.data())); if (Array.isArray(P.questions) && P.questions.every(q => Array.isArray(q.key)) && !papById(d.id)) OPAPERS.push({ id: d.id, ...P }) }) } catch(e){}
     try { const r = await mcp.callTool("Google Sheets", "get_values", { spreadsheetId: RESULTS_SHEET, range: "Sheet1!A2:H5000" }); const pl = (r && (r.payload || r.structuredContent)) || {}; rows = Array.isArray(pl.values) ? pl.values : [] }
     catch(e){ btn.disabled = false; const c = e && e.code;
       status.textContent = c === "needs_reauth" ? "Google Sheets needs reconnecting in claude.ai (Connectors), then press the button again."
@@ -2111,10 +2158,7 @@ if (TEACHER){
       const cands = students.filter(x => x.group === c.g), w = norm(who);
       const st = cands.find(x => norm(x.name) === w) || (w.length >= 3 ? cands.find(x => norm(x.name).startsWith(w) || w.startsWith(norm(x.name))) : null) || (cands.length === 1 ? cands[0] : null);
       if (!st){ unmatched.add(`${String(who || "No name").slice(0, 40)} (${gname(c.g)})`); continue }
-      const Q = c.hw ? hwInfo(c.g, c.i).hw : etOf(c.g, c.i); if (!Q || Q.length !== c.marks.length) continue;
-      const row = c.marks.map((m, k) => Math.min(m, Q[k][1])), T = c.hw ? hws : scores;
-      if (JSON.stringify((T[st.id] || {})[c.i]) === JSON.stringify(row)) continue;
-      (T[st.id] = T[st.id] || {})[c.i] = row; changed.add(st.id); n++;
+      const R = await applyCode(c, st); if (R.err || R.same) continue; changed.add(st.id); n++;
     }
     renderPills(); renderOverview(); renderPanel();
     for (const id of changed) await saveScores(id);
@@ -2137,7 +2181,8 @@ if (TEACHER){
       const [sd, qs] = await Promise.all([db.doc("tracker/students").get(), db.collection("scores").get()]);
       const clone = o => JSON.parse(JSON.stringify(o || null));
       students = sd.exists ? (clone(sd.data().list) || []) : [];
-      qs.docs.forEach(d => { scores[d.id] = clone(d.data().weeks) || {}; hws[d.id] = clone(d.data().hw) || {} });
+      qs.docs.forEach(d => { scores[d.id] = clone(d.data().weeks) || {}; hws[d.id] = clone(d.data().hw) || {}; paps[d.id] = clone(d.data().pap) || {} });
+      try { const pq = await db.collection("papers").get(); pq.docs.forEach(d => { const P = JSON.parse(JSON.stringify(d.data())); if (Array.isArray(P.questions) && P.questions.every(q => Array.isArray(q.key)) && !papById(d.id)) OPAPERS.push({ id: d.id, ...P }) }); if (hwGroup) renderPapers(hwGroup) } catch(e){}
       renderPills(); renderOverview(); renderPanel();
     } catch(e){ status.textContent = "Couldn't load saved scores. Reload the page to try again."; return }
     try { const pm = await window.claude.use("permissions"); const st = pm ? await Promise.resolve(pm.state("mcp:Google Sheets")).catch(() => "unavailable") : "unavailable"; if (st === "granted") importResults(true) } catch(e){}
