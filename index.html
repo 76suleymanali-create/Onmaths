@@ -1667,10 +1667,12 @@ function hwInfo(g, i){
   return { topic: G.topics[i], hw: W ? W.hw : null, base: W ? HWXB[g][i] : null, slides: !!(SLIDESX[g] && SLIDESX[g][i]), sbase: SLIDESX[g] ? SLIDESX[g][i] : null, prac: W ? W.mg : G.topics[i], pracName: G.link[0], pracUrl: G.link[1], pracLabel: g.startsWith("y10") ? "Real past-paper questions" : "Extra practice" };
 }
 let hwGroup = "y11s4";
+let LOCKED = false;
 function hwCard(gid, i, label, date, isNow, status){
   const I = hwInfo(gid, i), ready = !!I.hw;
   let body;
-  if (ready){
+  if (LOCKED && ready && HKEYS[I.base]){ body = `<p class="tiernote" style="margin:4px 0 8px">${I.hw.length} questions · ${I.hw.reduce((a,q)=>a+q[1],0)} marks · do your working on paper, then type your answers here</p>` }
+  else if (ready){
     const tot = I.hw.reduce((a,q)=>a+q[1],0);
     body = `<p class="tiernote" style="margin:4px 0 8px">${I.hw.length} questions · ${tot} marks · show your working</p>` +
       I.hw.map((q,k)=>`<div class="eq"><div>${k+1}. ${fmt(q[0])} <span class="mk">(${q[1]} mark${q[1]>1?"s":""})</span></div>${(TEACHER ? reveal(q[2],"Show mark scheme") : "")}</div>`).join("") +
@@ -1678,7 +1680,7 @@ function hwCard(gid, i, label, date, isNow, status){
   } else body = `<p class="tiernote" style="margin:4px 0 0">${isY11(gid) || (isSch(gid) && i < SOW_G[gid].length) ? "Mr Ali will add this week's homework before the lesson." : "No homework sheet for this lesson yet."}</p>`;
   if (ready && HKEYS[I.base]) body += `<div class="hwon" data-g="${gid}" data-i="${i}" data-b="${esc(I.base)}"><button type="button" class="hw-open">✏️ Do this homework online and get it marked</button><div class="hwform" hidden></div></div>`;
   { const vb = lessonBase(gid, i); if (vb && VIDEOS[vb]) body = `<div class="vwrap"><b>▶ 2-minute video</b><video controls playsinline preload="none" src="${VIDEOS[vb]}"${VPOST[vb] ? ` poster="${VPOST[vb]}"` : ""}></video></div>` + body }
-  if (I.prac) body += `<div class="pp"><b>${I.pracLabel}</b><div>${esc(I.pracName)} → search <b>${esc(I.prac)}</b></div><div class="links"><a href="${I.pracUrl}" target="_blank" rel="noopener">${esc(I.pracName)} <small>Free</small></a></div></div>`;
+  if (I.prac && !LOCKED) body += `<div class="pp"><b>${I.pracLabel}</b><div>${esc(I.pracName)} → search <b>${esc(I.prac)}</b></div><div class="links"><a href="${I.pracUrl}" target="_blank" rel="noopener">${esc(I.pracName)} <small>Free</small></a></div></div>`;
   return `<details class="hwk${isNow?" current":""}" id="hw-${gid}-${i}"${isNow?" open":""}><summary><span class="num">${label}</span><span class="dt">${date}</span><span class="tp">${esc(I.topic)}</span><span class="status ${ready?"ready":"soon"}">${status || (ready ? "Ready" : "Coming soon")}</span></summary><div class="hwbody">${body}</div></details>`;
 }
 function renderHw(gid){
@@ -2357,12 +2359,14 @@ function lockSite(g){
     if (hb) hb.hidden = true; return;
   }
   try { localStorage.setItem("onmaths-lock", g) } catch(e){}
-  if (!fromLink) setGroup(g, false);
+  LOCKED = true;
+  { const rh = renderHw; renderHw = gid => { rh(gid); hwlist.querySelectorAll(".hwon").forEach(b => { const o = b.querySelector(".hw-open"); if (o) o.textContent = "✏️ Start this homework" }); hwlist.querySelectorAll("details.hwk").forEach(d => { if (d.querySelector(".status.soon")) d.remove() }); hwlist.querySelectorAll(".hol").forEach(x => x.remove()); hwlist.querySelectorAll(".blk").forEach(x => { const n = x.nextElementSibling; if (!n || !n.matches("details.hwk")) x.remove() }); const cur = hwlist.querySelector("details[open] .hwon"); if (cur) drawHwForm(cur) } }
+  if (!fromLink) setGroup(g, false); else renderHw(g);
   setTimeout(() => { const t = document.getElementById(location.hash.startsWith("#report=") ? "y11hw" : "video"); if (t && fromLink) t.scrollIntoView({ behavior: "smooth" }) }, 50);
   hide(".gbar"); hide("#groupPills"); hide(".picker");
   const setP = (sel, t) => { const el = document.querySelector(sel); if (el) el.textContent = t };
   setP("#week .sec-head p", "Last week, this week and next week's topic.");
-  setP("#y11hw .sec-head p", "Open a lesson to see its 5 questions, the homework sheet and a link for extra practice.");
+  setP("#y11hw .sec-head p", "Do your homework online: type your answers, tap Mark my homework, then send Mr Ali your code.");
   const gs = document.getElementById("etGroupSel"); if (gs){ gs.hidden = true; const l = document.querySelector('label[for="etGroupSel"]'); if (l) l.hidden = true }
   const tip = document.getElementById("etGroupName"); if (tip && tip.parentElement) tip.parentElement.hidden = true;
   if (Y11G(g)){ document.querySelectorAll("#year11 .tabs button").forEach(b => { if (b.dataset.id !== g) b.hidden = true }); try { renderScheme(g) } catch(e){} }
