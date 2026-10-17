@@ -1797,7 +1797,9 @@ document.getElementById("stFull").addEventListener("click", () => { const c = do
   try { if (document.fullscreenElement) document.exitFullscreen(); else if (c.requestFullscreen) c.requestFullscreen().catch(() => toast("Full screen isn't available here.")); else toast("Full screen isn't available here.") } catch(e){ toast("Full screen isn't available here.") } });
 /*SUBMIT*/ const SUBMIT_URL = "https://script.google.com/macros/s/AKfycbyhSzx1_q1cwwXfr2-6Ru4yMl-RM3NzKA3nElTYMwo-zmfZX7IL06pVYAw8AlMhYy1h/exec"; const RESULTS_SHEET = "19AL5mfzVLqU38Z_JfXuZ7Pu2xe-RrVRRvLDPUme6sOY"; /*END-SUBMIT*/
 const SENDING = !!SUBMIT_URL && !TEACHER;
+try { const nn = new URLSearchParams(location.search).get("n"); if (nn && !TEACHER) localStorage.setItem("onmaths-name", nn.trim().slice(0, 40)) } catch(e){}
 const myName = () => { try { return localStorage.getItem("onmaths-name") || "" } catch(e){ return "" } };
+const studentLink = st => `${STUDENT_URL}?n=${encodeURIComponent(st.name)}#${st.group}`;
 const nameField = () => SENDING ? `<div class="etp namef"><label>Your first name, so Mr Ali gets your result</label><input class="stu-name" type="text" maxlength="40" autocomplete="given-name" value="${esc(myName())}"></div>` : "";
 function needName(scope){ if (!SENDING) return true; const inp = scope.querySelector(".stu-name"), v = (inp ? inp.value : myName()).trim();
   if (!v){ toast("Type your first name first."); if (inp) inp.focus(); return false } try { localStorage.setItem("onmaths-name", v) } catch(e){} document.querySelectorAll(".stu-name").forEach(x => { if (!x.value.trim()) x.value = v }); return true }
@@ -2125,6 +2127,7 @@ if (TEACHER){
     const st = students.find(x => x.id === sel); if (!st){ panel.innerHTML = ""; return }
     const S = stats(st), sc = scores[st.id] || {};
     let h = `<h3 style="font-size:1.4rem;margin:4px 0 6px">${esc(st.name)} <span class="tiernote">· ${esc(gname(st.group))}</span></h3>
+      <div class="tb-link" style="margin:0 0 12px"><b>${esc(st.name)}'s own link</b><span class="tiernote" style="margin:0">Send this to ${esc(st.name)}. It opens their class and fills in their name, so their results come to you automatically.</span><code>${esc(studentLink(st))}</code><button type="button" data-stlink="${esc(studentLink(st))}">Copy ${esc(st.name)}'s link</button></div>
       <div class="trk-code"><label for="trkCode"><b>Paste ${esc(st.name)}'s exit ticket or homework code</b></label><input id="trkCode" type="text" placeholder="e.g. Y11S4-W1-212-K or Y11S4-H1-22233-B" autocomplete="off" autocapitalize="characters"><button type="button" id="trkCodeBtn">Add marks</button></div>
       <div class="trk-sum"><div><b>${S.avg === null ? "–" : S.avg + "%"}</b><span>Average score</span></div><div><b>${S.rows.length}</b><span>Exit tickets done</span></div><div style="flex:1 1 220px"><b style="font-size:1rem">${S.weak.length ? S.weak.map(r => esc(topicOf(st.group, r.i)) + " (" + r.pct + "%)").join(", ") : "None yet"}</b><span>Topics to revisit (below 70%)</span></div></div>
       <div class="pr-box"><h4>Report for parents</h4>
@@ -2179,6 +2182,7 @@ if (TEACHER){
       try { await navigator.clipboard.writeText(txt); toast(pb.id === "prMsg" ? "Message copied. Paste it into WhatsApp, text or email." : "Link copied. Paste it into a message to the parent.") }
       catch(err){ out.innerHTML = `Press and hold to copy:<br><code class="pr-code">${esc(txt)}</code>`; selectEl(out.querySelector("code")) }
       return }
+    { const lb = e.target.closest("[data-stlink]"); if (lb){ try { navigator.clipboard.writeText(lb.dataset.stlink).then(() => toast("Link copied. Send it to the student."), () => toast("Press and hold the link to copy it.")) } catch(err){ toast("Press and hold the link to copy it.") } return } }
     if (e.target.closest("#trkCodeBtn")){
       const st = students.find(x => x.id === sel), c = readCode(document.getElementById("trkCode").value);
       if (!c){ status.textContent = "That code isn't valid. Check it was copied exactly, e.g. Y11S4-W1-212-K."; return }
