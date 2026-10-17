@@ -132,6 +132,10 @@ header nav a:hover{background:color-mix(in srgb,var(--band-ink) 15%,transparent)
 .et-top b{font:800 1.1rem var(--display)}
 .et-top label{font-weight:700}
 .hwon{margin:12px 0 4px}
+.trk-imp{font:700 .9rem var(--body);border:2px solid var(--ink);border-radius:999px;padding:8px 14px;background:var(--hi);color:var(--hi-ink);cursor:pointer;margin-left:auto}
+.sendst{font-weight:800}
+.codebox summary{cursor:pointer;font-size:.9rem;opacity:.85}
+.hw-go-now{display:block;width:100%;font:800 1.1rem var(--body);border:3px solid var(--ink);border-radius:16px;padding:16px;margin:0 0 14px;background:var(--hi);color:var(--hi-ink);cursor:pointer;box-shadow:4px 4px 0 var(--ink)}
 .hw-open{font:700 .95rem var(--body);border:2px solid var(--ink);border-radius:999px;padding:10px 16px;background:var(--hi);color:var(--hi-ink);cursor:pointer}
 .hwform{display:grid;gap:12px;margin-top:10px;background:var(--card);border:2px solid var(--line);border-radius:12px;padding:12px}
 .vid-sec{padding-top:0;scroll-margin-top:var(--hdr,130px)}
@@ -642,7 +646,7 @@ footer b{color:var(--ink);font-family:var(--display)}
         <label for="trkGroup">Group</label><select id="trkGroup"></select>
         <button type="button" id="trkAddBtn">Add student</button>
       </div>
-      <div class="gbar"><label for="trkShow">Show</label><select id="trkShow"></select></div>
+      <div class="gbar"><label for="trkShow">Show</label><select id="trkShow"></select><button type="button" id="trkImport" class="trk-imp">🔄 Get students' results</button></div>
       <p class="tiernote" id="trkStatus">Loading saved scores…</p>
       <div class="pills" id="trkStudents" role="group" aria-label="Students"></div>
       <div id="trkOverview"></div>
@@ -1756,6 +1760,26 @@ stGo.addEventListener("click", () => {
 });
 document.getElementById("stFull").addEventListener("click", () => { const c = document.getElementById("stCard");
   try { if (document.fullscreenElement) document.exitFullscreen(); else if (c.requestFullscreen) c.requestFullscreen().catch(() => toast("Full screen isn't available here.")); else toast("Full screen isn't available here.") } catch(e){ toast("Full screen isn't available here.") } });
+/*SUBMIT*/ const SUBMIT_URL = ""; const RESULTS_SHEET = "19AL5mfzVLqU38Z_JfXuZ7Pu2xe-RrVRRvLDPUme6sOY"; /*END-SUBMIT*/
+const SENDING = !!SUBMIT_URL && !TEACHER;
+const myName = () => { try { return localStorage.getItem("onmaths-name") || "" } catch(e){ return "" } };
+const nameField = () => SENDING ? `<div class="etp namef"><label>Your first name, so Mr Ali gets your result</label><input class="stu-name" type="text" maxlength="40" autocomplete="given-name" value="${esc(myName())}"></div>` : "";
+function needName(scope){ if (!SENDING) return true; const inp = scope.querySelector(".stu-name"), v = (inp ? inp.value : myName()).trim();
+  if (!v){ toast("Type your first name first."); if (inp) inp.focus(); return false } try { localStorage.setItem("onmaths-name", v) } catch(e){} document.querySelectorAll(".stu-name").forEach(x => { if (!x.value.trim()) x.value = v }); return true }
+const wasSent = code => { try { return !!localStorage.getItem("onmaths-sent-" + code) } catch(e){ return false } };
+function sendBlock(code, codeAttr){
+  if (!SENDING) return `<div>Send this code to Mr Ali:</div><code ${codeAttr}>${code}</code><button type="button" class="copy-code">Copy code</button>`;
+  return `<div class="sendst" data-code="${code}">${wasSent(code) ? "✓ Sent to Mr Ali. Your result is saved." : "Sending your result to Mr Ali…"}</div><details class="codebox"><summary>Your code (only if Mr Ali asks for it)</summary><code ${codeAttr}>${code}</code><button type="button" class="copy-code">Copy code</button></details>`;
+}
+function sendResult(type, g, i, marks, max, code, topic, box){
+  if (!SENDING) return;
+  const show = t => { const el = box && box.querySelector(`.sendst[data-code="${code}"]`); if (el) el.textContent = t };
+  if (wasSent(code)){ show("✓ Sent to Mr Ali. Your result is saved."); return }
+  const body = JSON.stringify({ student: myName(), group: g, type, week: i + 1, topic, score: `${marks.reduce((a, b) => a + b, 0)}/${max}`, code });
+  fetch(SUBMIT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body })
+    .then(() => { try { localStorage.setItem("onmaths-sent-" + code, "1") } catch(e){} show("✓ Sent to Mr Ali. Your result is saved.") },
+          () => show("Couldn't send just now. Check your internet, then reload this page and it will try again."));
+}
 /* ===== Online homework: auto-marked, with a result code for the tracker ===== */
 const hwStoreKey = (g, i) => `onmaths-hw-${g}-${i}`;
 function drawHwForm(box){
@@ -1768,7 +1792,7 @@ function drawHwForm(box){
       if (part[0] === "mc") return `<div class="etp" role="group" aria-label="${esc(part[2] || "Choose")}">${part[3].map(o => `<button type="button" class="opt hopt" data-k="${k}" data-j="${j}" data-v="${esc(o)}" aria-pressed="${val === o}"${saved ? " disabled" : ""}>${esc(o)}</button>`).join("")}</div>`;
       return `<div class="etp">${lab}<input id="${id}" data-k="${k}" data-j="${j}" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(val)}"${saved ? " disabled" : ""}></div>`;
     }).join("") + `<div class="res" hidden></div></div>`).join("");
-  if (!saved) h += pad + `<button type="button" class="et-go hw-mark">Mark my homework</button>`;
+  if (!saved) h += pad + nameField() + `<button type="button" class="et-go hw-mark">Mark my homework</button>`;
   h += `<div class="hw-result"></div>`;
   form.innerHTML = h; form.hidden = false; box.querySelector(".hw-open").hidden = true;
   if (saved) hwResult(box, saved.a);
@@ -1782,7 +1806,8 @@ function hwResult(box, answers){
     r.innerHTML = (full ? "✓ Correct" : marks[k] ? `◐ ${marks[k]} of ${hw[k][1]} marks` : "✗ Not quite") + ` · ${marks[k]}/${hw[k][1]}` + (full ? "" : `<br>Answer: <span>${key[k].map(p => fmt(MK.shown(p))).join(" · ")}</span>`) });
   const got = marks.reduce((a, b) => a + b, 0), max = hw.reduce((a, q) => a + q[1], 0), code = makeCode(g, i, marks, "H");
   box.querySelector(".hw-result").innerHTML = `<div class="et-result"><div class="score">${got} / ${max}</div><div>${got === max ? "Brilliant, full marks!" : got / max >= 0.7 ? "Well done. Check the answers above for anything you missed." : "Good try. Look at the answers above and ask Mr Ali about anything you're unsure of."}</div>
-    <div>Send this homework code to Mr Ali:</div><code class="hw-code">${code}</code><button type="button" class="hw-copy">Copy code</button><button type="button" class="et-retry hw-retry">↻ Clear and try again</button></div>`;
+    ${sendBlock(code, 'class="hw-code"')}<button type="button" class="et-retry hw-retry">↻ Clear and try again</button></div>`;
+  sendResult("Homework", g, i, marks, max, code, hwInfo(g, i).topic, box);
 }
 let hwLastInput = null;
 hwlist.addEventListener("focusin", e => { if (e.target.matches(".hwform input[data-k]")) hwLastInput = e.target });
@@ -1793,11 +1818,11 @@ hwlist.addEventListener("click", e => {
   const kb = e.target.closest("[data-hkey]"); if (kb){ const inp = (hwLastInput && box.contains(hwLastInput)) ? hwLastInput : box.querySelector("input[data-k]:not([disabled])"); if (!inp) return;
     const v = kb.dataset.hkey === "−" ? "-" : kb.dataset.hkey, a = inp.selectionStart ?? inp.value.length, b = inp.selectionEnd ?? a;
     inp.value = inp.value.slice(0, a) + v + inp.value.slice(b); inp.focus(); try { inp.setSelectionRange(a + v.length, a + v.length) } catch(err){} return }
-  if (e.target.closest(".hw-mark")){ const ans = hwCollect(box);
+  if (e.target.closest(".hw-mark")){ const ans = hwCollect(box); if (!needName(box)) return;
     if (ans.flat().every(v => !String(v).trim())){ toast("Answer at least one question first."); return }
     try { localStorage.setItem(hwStoreKey(box.dataset.g, +box.dataset.i), JSON.stringify({ a: ans })) } catch(err){}
     drawHwForm(box); box.querySelector(".hw-result").scrollIntoView({ behavior: "smooth", block: "nearest" }); return }
-  if (e.target.closest(".hw-copy")){ const c = box.querySelector(".hw-code").textContent;
+  if (e.target.closest(".copy-code")){ const c = box.querySelector(".hw-code").textContent;
     try { navigator.clipboard.writeText(c).then(() => toast("Code copied. Send it to Mr Ali."), () => { selectEl(box.querySelector(".hw-code")); toast("Press and hold the code to copy it.") }) } catch(err){ selectEl(box.querySelector(".hw-code")); toast("Press and hold the code to copy it.") } return }
   const rt = e.target.closest(".hw-retry"); if (rt){ if (!rt.dataset.sure){ rt.dataset.sure = "1"; rt.textContent = "Tap again to clear your answers"; return }
     try { localStorage.removeItem(hwStoreKey(box.dataset.g, +box.dataset.i)) } catch(err){} drawHwForm(box); toast("Cleared. Have another go!") }
@@ -1912,7 +1937,7 @@ function drawExit(g, i){
       const numeric = part[0] === "num" && typeof part[1] === "number" && part[1] >= 0 && Number.isInteger(part[1] * 100);
       return `<div class="etp">${lab}<input id="${id}" data-k="${k}" data-j="${j}" type="text" ${numeric ? 'inputmode="decimal"' : 'inputmode="text"'} autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(val)}"${saved ? " disabled" : ""}></div>`;
     }).join("") + `<div class="res" id="etr-${k}" hidden></div></div>`).join("");
-  if (!saved) h += pad + `<button type="button" class="et-go" id="etGo">Mark my answers</button>`;
+  if (!saved) h += pad + nameField() + `<button type="button" class="et-go" id="etGo">Mark my answers</button>`;
   h += `<div id="etResult"></div>`;
   etBox.innerHTML = h; etBox.dataset.g = g; etBox.dataset.i = i;
   if (saved) showResult(g, i, saved.a);
@@ -1927,7 +1952,8 @@ function showResult(g, i, answers){
     r.innerHTML = (full ? "✓ Correct" : marks[k] ? `◐ ${marks[k]} of ${et[k][1]} marks` : "✗ Not quite") + ` · ${marks[k]}/${et[k][1]}` + (full ? "" : `<br>Answer: <span>${q.map(p => fmt(MK.shown(p))).join(" · ")}</span>`); });
   const got = marks.reduce((a, b) => a + b, 0), max = et.reduce((a, q) => a + q[1], 0), code = makeCode(g, i, marks);
   document.getElementById("etResult").innerHTML = `<div class="et-result"><div class="score">${got} / ${max}</div><div>${got === max ? "Brilliant, full marks!" : got / max >= 0.7 ? "Well done. Check the answers above for anything you missed." : "Good try. Look at the answers above and ask Mr Ali about anything you're unsure of."}</div>
-    <div>Send this code to Mr Ali:</div><code id="etCode">${code}</code><button type="button" id="etCopy">Copy code</button><button type="button" id="etRetry" class="et-retry">↻ Clear and try again</button></div>`;
+    ${sendBlock(code, 'id="etCode"').replace('class="copy-code"', 'id="etCopy"')}<button type="button" id="etRetry" class="et-retry">↻ Clear and try again</button></div>`;
+  sendResult("Exit ticket", g, i, marks, max, code, hwInfo(g, i).topic, document.getElementById("etResult"));
   return code;
 }
 etWeekSel.addEventListener("change", () => drawExit(etGroup, +etWeekSel.value));
@@ -1941,6 +1967,7 @@ etBox.addEventListener("click", e => {
   if (e.target.closest("#etGo")){
     const g = etBox.dataset.g, i = +etBox.dataset.i, ans = collect();
     if (ans.flat().every(v => !String(v).trim())){ toast("Answer at least one question first."); return }
+    if (!needName(etBox)) return; { const nf = etBox.querySelector(".namef"); if (nf) nf.remove() }
     try { localStorage.setItem(etStoreKey(g, i), JSON.stringify({ a: ans })) } catch(err){}
     etBox.querySelectorAll("input[data-k], .opt").forEach(x => x.disabled = true);
     const go = document.getElementById("etGo"); go.remove(); const kp = etBox.querySelector(".keys"); if (kp) kp.remove();
@@ -2065,6 +2092,36 @@ if (TEACHER){
     const id = sel; students = students.filter(x => x.id !== id); delete scores[id]; sel = null; pendingDel = null;
     renderPills(); renderOverview(); renderPanel(); await saveStudents(); try { await db.doc("scores/" + id).delete() } catch(e){}
   });
+  async function importResults(auto){
+    const btn = document.getElementById("trkImport");
+    if (!db){ if (!auto) status.textContent = "The tracker isn't connected. Open the teacher site while signed in to claude.ai."; return }
+    const mcp = window.claude && window.claude.use ? await window.claude.use("mcp").catch(() => null) : null;
+    if (!mcp){ if (!auto) status.textContent = "Google Sheets can't be reached from this view. Open the teacher site in claude.ai, or paste codes instead."; return }
+    btn.disabled = true; status.textContent = "Getting students' results…"; let rows;
+    try { const r = await mcp.callTool("Google Sheets", "get_values", { spreadsheetId: RESULTS_SHEET, range: "Sheet1!A2:H5000" }); const pl = (r && (r.payload || r.structuredContent)) || {}; rows = Array.isArray(pl.values) ? pl.values : [] }
+    catch(e){ btn.disabled = false; const c = e && e.code;
+      status.textContent = c === "needs_reauth" ? "Google Sheets needs reconnecting in claude.ai (Connectors), then press the button again."
+        : c === "server_not_connected" ? "Connect Google Sheets in claude.ai (Connectors), then press the button again."
+        : (c === "not_granted" || c === "approval_required" || c === "denied") ? "Allow this page to use Google Sheets, then press the button again."
+        : c === "tool_error" ? "Google Sheets couldn't open the results sheet. Check “OnMaths results (do not edit)” is still in your Google Drive."
+        : "Couldn't get results just now. Try again in a minute."; return }
+    const norm = x => String(x || "").trim().toLowerCase().split(/\s+/)[0] || "", changed = new Set(), unmatched = new Set(); let n = 0;
+    for (const r of rows){
+      const who = r[1], c = readCode(r[7]); if (!c) continue;
+      const cands = students.filter(x => x.group === c.g), w = norm(who);
+      const st = cands.find(x => norm(x.name) === w) || (w.length >= 3 ? cands.find(x => norm(x.name).startsWith(w) || w.startsWith(norm(x.name))) : null) || (cands.length === 1 ? cands[0] : null);
+      if (!st){ unmatched.add(`${String(who || "No name").slice(0, 40)} (${gname(c.g)})`); continue }
+      const Q = c.hw ? hwInfo(c.g, c.i).hw : etOf(c.g, c.i); if (!Q || Q.length !== c.marks.length) continue;
+      const row = c.marks.map((m, k) => Math.min(m, Q[k][1])), T = c.hw ? hws : scores;
+      if (JSON.stringify((T[st.id] || {})[c.i]) === JSON.stringify(row)) continue;
+      (T[st.id] = T[st.id] || {})[c.i] = row; changed.add(st.id); n++;
+    }
+    renderPills(); renderOverview(); renderPanel();
+    for (const id of changed) await saveScores(id);
+    btn.disabled = false;
+    status.textContent = (n ? `Added ${n} new result${n > 1 ? "s" : ""} from students. Saved.` : "No new results since last time.") + (unmatched.size ? ` Not matched to a student: ${[...unmatched].join(", ")}. Add them in the tracker with the same first name, then press the button again.` : "");
+  }
+  document.getElementById("trkImport").addEventListener("click", () => importResults(false));
   pillsEl.addEventListener("click", e => { const b = e.target.closest("[data-st]"); if (!b) return; sel = b.dataset.st; pendingDel = null; renderPills(); renderPanel() });
   document.getElementById("trkAddBtn").addEventListener("click", async () => {
     const nameEl = document.getElementById("trkName"), name = nameEl.value.trim(), group = document.getElementById("trkGroup").value;
@@ -2082,7 +2139,8 @@ if (TEACHER){
       students = sd.exists ? (clone(sd.data().list) || []) : [];
       qs.docs.forEach(d => { scores[d.id] = clone(d.data().weeks) || {}; hws[d.id] = clone(d.data().hw) || {} });
       renderPills(); renderOverview(); renderPanel();
-    } catch(e){ status.textContent = "Couldn't load saved scores. Reload the page to try again." }
+    } catch(e){ status.textContent = "Couldn't load saved scores. Reload the page to try again."; return }
+    try { const pm = await window.claude.use("permissions"); const st = pm ? await Promise.resolve(pm.state("mcp:Google Sheets")).catch(() => "unavailable") : "unavailable"; if (st === "granted") importResults(true) } catch(e){}
   })();
 }
 /* ===== Weekly exam papers (teacher only; listed from the site database) ===== */
@@ -2360,7 +2418,10 @@ function lockSite(g){
   }
   try { localStorage.setItem("onmaths-lock", g) } catch(e){}
   LOCKED = true;
-  { const rh = renderHw; renderHw = gid => { rh(gid); hwlist.querySelectorAll(".hwon").forEach(b => { const o = b.querySelector(".hw-open"); if (o) o.textContent = "✏️ Start this homework" }); hwlist.querySelectorAll("details.hwk").forEach(d => { if (d.querySelector(".status.soon")) d.remove() }); hwlist.querySelectorAll(".hol").forEach(x => x.remove()); hwlist.querySelectorAll(".blk").forEach(x => { const n = x.nextElementSibling; if (!n || !n.matches("details.hwk")) x.remove() }); const cur = hwlist.querySelector("details[open] .hwon"); if (cur) drawHwForm(cur) } }
+  { const rh = renderHw; renderHw = gid => { rh(gid); hwlist.querySelectorAll(".hwon").forEach(b => { const o = b.querySelector(".hw-open"); if (o) o.textContent = "👉 Press here to do this homework now" });
+    hwlist.querySelectorAll("h3.hw-h").forEach(h => { if (/bank/i.test(h.textContent)){ let n = h.nextElementSibling; while (n && !n.matches("h3")){ const x = n; n = n.nextElementSibling; x.remove() } h.remove() } });
+    hwlist.querySelectorAll("h3.hw-h").forEach(h => { if (/scheme of work|Lessons taught/i.test(h.textContent)) h.textContent = "Your homework" });
+    { const cur = hwlist.querySelector("details[open]"); if (cur && cur.querySelector(".hwon")){ const go = document.createElement("button"); go.type = "button"; go.className = "hw-go-now"; go.textContent = "👉 Press here to do your homework now"; go.onclick = () => { const f = cur.querySelector(".hwform input, .hwform .hopt"); cur.scrollIntoView({ behavior: "smooth", block: "start" }); if (f) setTimeout(() => f.focus({ preventScroll: true }), 400) }; hwlist.prepend(go) } } hwlist.querySelectorAll("details.hwk").forEach(d => { if (d.querySelector(".status.soon")) d.remove() }); hwlist.querySelectorAll(".hol").forEach(x => x.remove()); hwlist.querySelectorAll(".blk").forEach(x => { const n = x.nextElementSibling; if (!n || !n.matches("details.hwk")) x.remove() }); const cur = hwlist.querySelector("details[open] .hwon"); if (cur) drawHwForm(cur) } }
   if (!fromLink) setGroup(g, false); else renderHw(g);
   setTimeout(() => { const t = document.getElementById(location.hash.startsWith("#report=") ? "y11hw" : "video"); if (t && fromLink) t.scrollIntoView({ behavior: "smooth" }) }, 50);
   hide(".gbar"); hide("#groupPills"); hide(".picker");
