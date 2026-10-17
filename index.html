@@ -522,7 +522,7 @@ footer b{color:var(--ink);font-family:var(--display)}
     </div>
   </section>
 
-  <section>
+  <section id="howto">
     <div class="wrap">
       <div class="sec-head">
         <div class="eyebrow">Getting started</div>
@@ -2248,7 +2248,39 @@ async function reportPdf(R){
 { let g0 = null; try { g0 = localStorage.getItem("onmaths-group") } catch(e){}
   const h = location.hash.slice(1), R = h.startsWith("report=") ? readReport(h.slice(7)) : null;
   if (R) setGroup(R.g, false); else if (HWGROUPS.some(x => x[0] === h)) setGroup(h, true); else setGroup(HWGROUPS.some(x => x[0] === g0) ? g0 : "y11s4", false);
-  if (R) showReport(R); else if (h.startsWith("report=")) setTimeout(() => toast("This report link is incomplete. Ask Mr Ali to send it again."), 300); }
+  if (R) showReport(R); else if (h.startsWith("report=")) setTimeout(() => toast("This report link is incomplete. Ask Mr Ali to send it again."), 300);
+  if (!TEACHER) lockSite(R ? R.g : (HWGROUPS.some(x => x[0] === h) ? h : null)); }
+/* Student site: each student only sees their own group (set by the link Mr Ali sends) */
+function lockSite(g){
+  let fromLink = !!g;
+  if (!g){ try { g = localStorage.getItem("onmaths-lock") } catch(e){} }
+  if (g && !HWGROUPS.some(x => x[0] === g)) g = null;
+  const hide = sel => document.querySelectorAll(sel).forEach(el => el.hidden = true);
+  const nav = document.querySelector("nav");
+  const keep = new Set(["starter", "week", "exit", "y11hw"]);
+  if (g && Y11G(g)) keep.add("year11");
+  ["howto", "mygroup", "groups", "homework", "revision", "games", "year11", "starter", "week", "exit", "y11hw"].forEach(id => { const el = document.getElementById(id); if (el && !keep.has(id)) el.hidden = true });
+  if (nav) nav.querySelectorAll("a").forEach(a => { const id = (a.getAttribute("href") || "").replace("#", ""); if (!keep.has(id) || !g) a.hidden = true });
+  const h1 = document.querySelector(".hero h1"), hp = document.querySelector(".hero p"), hb = document.querySelector(".hero .btns");
+  if (!g){
+    keep.forEach(id => { const el = document.getElementById(id); if (el) el.hidden = true });
+    if (h1) h1.innerHTML = `Welcome to <span class="mark">OnMaths</span>`;
+    if (hp) hp.textContent = "Open the link Mr Ali sent you to see your lessons, homework and exit tickets.";
+    if (hb) hb.hidden = true; return;
+  }
+  try { localStorage.setItem("onmaths-lock", g) } catch(e){}
+  if (!fromLink) setGroup(g, false);
+  hide(".gbar"); hide("#groupPills"); hide(".picker");
+  const setP = (sel, t) => { const el = document.querySelector(sel); if (el) el.textContent = t };
+  setP("#week .sec-head p", "Last week, this week and next week's topic.");
+  setP("#y11hw .sec-head p", "Open a lesson to see its 5 questions, the homework sheet and a link for extra practice.");
+  const gs = document.getElementById("etGroupSel"); if (gs){ gs.hidden = true; const l = document.querySelector('label[for="etGroupSel"]'); if (l) l.hidden = true }
+  const tip = document.getElementById("etGroupName"); if (tip && tip.parentElement) tip.parentElement.hidden = true;
+  if (Y11G(g)){ document.querySelectorAll("#year11 .tabs button").forEach(b => { if (b.dataset.id !== g) b.hidden = true }); try { renderScheme(g) } catch(e){} }
+  if (h1) h1.innerHTML = `${esc(gname(g))}: <span class="mark">your maths</span>`;
+  if (hp) hp.textContent = "Start with the starter, then this week's lesson, your homework and the exit ticket at the end of each lesson.";
+  if (hb) hb.innerHTML = `<a class="btn primary" href="#starter">Starter →</a><a class="btn" href="#y11hw">My homework</a>`;
+}
 const m = location.hash.match(/^#(y11s[24])-L(\d+)$/);
 if (m) openLesson(m[1], +m[2] - 1);
 </script>
