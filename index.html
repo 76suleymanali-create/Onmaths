@@ -1795,7 +1795,7 @@ stGo.addEventListener("click", () => {
 });
 document.getElementById("stFull").addEventListener("click", () => { const c = document.getElementById("stCard");
   try { if (document.fullscreenElement) document.exitFullscreen(); else if (c.requestFullscreen) c.requestFullscreen().catch(() => toast("Full screen isn't available here.")); else toast("Full screen isn't available here.") } catch(e){ toast("Full screen isn't available here.") } });
-/*SUBMIT*/ const SUBMIT_URL = ""; const RESULTS_SHEET = "19AL5mfzVLqU38Z_JfXuZ7Pu2xe-RrVRRvLDPUme6sOY"; /*END-SUBMIT*/
+/*SUBMIT*/ const SUBMIT_URL = "https://script.google.com/macros/s/AKfycbyhSzx1_q1cwwXfr2-6Ru4yMl-RM3NzKA3nElTYMwo-zmfZX7IL06pVYAw8AlMhYy1h/exec"; const RESULTS_SHEET = "19AL5mfzVLqU38Z_JfXuZ7Pu2xe-RrVRRvLDPUme6sOY"; /*END-SUBMIT*/
 const SENDING = !!SUBMIT_URL && !TEACHER;
 const myName = () => { try { return localStorage.getItem("onmaths-name") || "" } catch(e){ return "" } };
 const nameField = () => SENDING ? `<div class="etp namef"><label>Your first name, so Mr Ali gets your result</label><input class="stu-name" type="text" maxlength="40" autocomplete="given-name" value="${esc(myName())}"></div>` : "";
