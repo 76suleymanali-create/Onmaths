@@ -1899,7 +1899,7 @@ document.addEventListener("click", e => {
 const paplist = document.getElementById("paplist");
 const pnorm = x => String(x || "").trim().toLowerCase().split(/\s+/)[0] || "";
 function papersFor(g){ const me = pnorm(myName());
-  return OPAPERS.filter(P => P.group === g && Array.isArray(P.questions) && P.questions.length && P.questions.every(q => Array.isArray(q.key) && q.key.length) && (TEACHER || /all pupils/i.test(P.student) || (me && pnorm(P.student) === me))).sort((a, b) => (papKind(a) === "B" ? -1 : 0) - (papKind(b) === "B" ? -1 : 0) || papNum(b) - papNum(a)) }
+  return OPAPERS.filter(P => P.group === g && Array.isArray(P.questions) && P.questions.length && P.questions.every(q => Array.isArray(q.key) && q.key.length) && (TEACHER || /all pupils/i.test(P.student) || (me && pnorm(P.student) === me))).sort((a, b) => /^y11/.test(g) ? ((papKind(a) === "B" ? 1 : 0) - (papKind(b) === "B" ? 1 : 0) || papNum(b) - papNum(a)) : ((papKind(a) === "B" ? -1 : 0) - (papKind(b) === "B" ? -1 : 0) || papNum(b) - papNum(a))) }
 function renderPapers(g){
   if (!paplist) return; const L = papersFor(g), TT = TESTS.filter(t => t.g === g && t.r.every(r => resolveRef(r))).sort((a, b) => b.n - a.n);
   if (!L.length && !TT.length){ paplist.innerHTML = ""; return }
@@ -1909,6 +1909,20 @@ function renderPapers(g){
     const tot = P.questions.reduce((a, q) => a + q.marks, 0);
     return `<details class="hwk${k === 0 ? " current" : ""}"${k === 0 && !TEACHER ? " open" : ""}><summary><span class="num">${papKind(P) === "B" ? "Baseline" : "Paper"}</span><span class="dt">${esc(P.week || "")}</span><span class="tp">${esc(P.title)}${TEACHER ? " · " + esc(P.student) : ""}</span><span class="status ready">${P.calc ? "Calculator" : "Non-calculator"}</span></summary><div class="hwbody"><p class="tiernote" style="margin:4px 0 8px">${P.questions.length} questions · ${tot} marks · 1 hour · ${P.calc ? "you may use a calculator" : "no calculator"}</p><div class="hwon" data-pap="${esc(P.id)}"><button type="button" class="hw-open">👉 Press here to start this paper</button><div class="hwform" hidden></div></div></div></details>`;
   }).join("") : "");
+  if (LOCKED && /^y11/.test(g)) y11PaperHomework();
+}
+/* Year 11 students: this week's exam paper IS the homework, shown first and opened ready to do */
+function y11PaperHomework(){
+  const first = paplist.querySelector("details:has([data-pap])"); if (!first) return;
+  const sec = hwlist.parentNode; if (paplist.nextElementSibling !== hwlist) sec.insertBefore(paplist, hwlist);
+  const h = paplist.querySelector("h3.hw-h:not(.tests-h)"); paplist.querySelectorAll("h3.hw-h").forEach(x => { if (/Exam papers/.test(x.textContent)) { x.textContent = "📝 This week's homework: exam paper"; const n = x.nextElementSibling; if (n && n.matches("p.tiernote")) n.textContent = "Do it like a real exam: 1 hour, working on paper, then type your answers and press Mark my paper. It is marked straight away and your result goes to Mr Ali." } });
+  paplist.querySelectorAll("details:has([data-pap])").forEach(d => d.open = d === first);
+  const bx = first.querySelector(".hwon"); if (bx && !bx.querySelector(".hwform input, .hwform .hw-result .score")) drawHwForm(bx);
+  const ob = first.querySelector(".hw-open"); if (ob) ob.textContent = "👉 Press here to start your paper";
+  hwlist.querySelectorAll("h3.hw-h").forEach(x => { if (/Your homework|scheme of work|Lessons taught/i.test(x.textContent)) x.textContent = "Topic practice (optional)" });
+  hwlist.querySelectorAll("details.hwk[open]").forEach(d => d.open = false);
+  let go = document.querySelector(".hw-go-now"); if (!go){ go = document.createElement("button"); go.type = "button"; go.className = "hw-go-now" }
+  {  go.textContent = "👉 Press here to do your exam paper homework"; paplist.prepend(go); hwlist.querySelectorAll(".hw-go-now").forEach(x => x.remove()); go.onclick = () => { first.open = true; first.scrollIntoView({ behavior: "smooth", block: "start" }); const f = first.querySelector(".hwform input"); if (f) setTimeout(() => f.focus({ preventScroll: true }), 400) } }
 }
 { const rh = renderHw; renderHw = gid => { rh(gid); renderPapers(gid) } }
 fetch("papers.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : []).then(L => { if (!Array.isArray(L)) return; L.forEach(P => { if (P && P.id && !papById(P.id)) OPAPERS.push(P) }); if (hwGroup) renderPapers(hwGroup) }).catch(() => {});
@@ -2579,13 +2593,13 @@ function lockSite(g){
         hwlist.querySelectorAll("h3.hw-h").forEach(h => { if (h !== bh && !h.nextElementSibling?.matches("details")) h.remove() });
         const first = hwlist.querySelector("details.hwk"); if (first){ first.open = true; first.classList.add("current") } } }
     hwlist.querySelectorAll("h3.hw-h").forEach(h => { if (/scheme of work|Lessons taught/i.test(h.textContent)) h.textContent = "Your homework" });
-    { const cur = hwlist.querySelector("details[open]"); if (cur && cur.querySelector(".hwon")){ const go = document.createElement("button"); go.type = "button"; go.className = "hw-go-now"; go.textContent = "👉 Press here to do your homework now"; go.onclick = () => { const f = cur.querySelector(".hwform input, .hwform .hopt"); cur.scrollIntoView({ behavior: "smooth", block: "start" }); if (f) setTimeout(() => f.focus({ preventScroll: true }), 400) }; hwlist.prepend(go) } } hwlist.querySelectorAll("details.hwk").forEach(d => { if (d.querySelector(".status.soon")) d.remove() }); hwlist.querySelectorAll(".hol").forEach(x => x.remove()); hwlist.querySelectorAll(".blk").forEach(x => { const n = x.nextElementSibling; if (!n || !n.matches("details.hwk")) x.remove() }); const cur = hwlist.querySelector("details[open] .hwon"); if (cur) drawHwForm(cur) } }
+    { const cur = hwlist.querySelector("details[open]"); if (cur && cur.querySelector(".hwon") && !(/^y11/.test(gid) && paplist && paplist.querySelector("[data-pap]"))){ const go = document.createElement("button"); go.type = "button"; go.className = "hw-go-now"; go.textContent = "👉 Press here to do your homework now"; go.onclick = () => { const f = cur.querySelector(".hwform input, .hwform .hopt"); cur.scrollIntoView({ behavior: "smooth", block: "start" }); if (f) setTimeout(() => f.focus({ preventScroll: true }), 400) }; hwlist.prepend(go) } } hwlist.querySelectorAll("details.hwk").forEach(d => { if (d.querySelector(".status.soon")) d.remove() }); hwlist.querySelectorAll(".hol").forEach(x => x.remove()); hwlist.querySelectorAll(".blk").forEach(x => { const n = x.nextElementSibling; if (!n || !n.matches("details.hwk")) x.remove() }); const cur = hwlist.querySelector("details[open] .hwon"); if (cur) drawHwForm(cur) } }
   if (!fromLink) setGroup(g, false); else renderHw(g);
   setTimeout(() => { const t = document.getElementById(location.hash.startsWith("#report=") ? "y11hw" : new URLSearchParams(location.search).get("t") ? "paplist" : "video"); if (t && fromLink) t.scrollIntoView({ behavior: "smooth" }) }, 50);
   hide(".gbar"); hide("#groupPills"); hide(".picker");
   const setP = (sel, t) => { const el = document.querySelector(sel); if (el) el.textContent = t };
   setP("#week .sec-head p", "Last week, this week and next week's topic.");
-  setP("#y11hw .sec-head p", "Do your homework online: type your answers, tap Mark my homework, then send Mr Ali your code.");
+  setP("#y11hw .sec-head p", "Do your homework online: type your answers and press Mark. It is marked straight away and your result goes to Mr Ali automatically.");
   const gs = document.getElementById("etGroupSel"); if (gs){ gs.hidden = true; const l = document.querySelector('label[for="etGroupSel"]'); if (l) l.hidden = true }
   const tip = document.getElementById("etGroupName"); if (tip && tip.parentElement) tip.parentElement.hidden = true;
   if (Y11G(g)){ document.querySelectorAll("#year11 .tabs button").forEach(b => { if (b.dataset.id !== g) b.hidden = true }); try { renderScheme(g) } catch(e){} }
