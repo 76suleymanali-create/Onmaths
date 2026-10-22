@@ -1754,14 +1754,20 @@ hwlist.addEventListener("click", e => {
 });
 /* ===== Topic video (2-minute explainer for the current lesson) ===== */
 const VIDKEY = {"y8s2|0": "Y8-Set2-L1-Standard-form", "y4|32": "Y4-V33-Place-value-rounding", "y4|33": "Y4-V34-Addition-subtraction", "y4|34": "Y4-V35-Times-tables-3-6-and-9", "y4|35": "Y4-V36-Times-tables-7-11-and-12", "y4|36": "Y4-V37-Multiplying-by-a-1-digit-number", "y4|37": "Y4-V38-Division-with-remainders", "y4|38": "Y4-V39-Area-perimeter", "y4|39": "Y4-V40-Equivalent-fractions", "y7s3|32": "Y7-Set3-V33-Place-value-ordering-decimals", "y7s3|33": "Y7-Set3-V34-Rounding-estimation", "y7s3|34": "Y7-Set3-V35-Negative-numbers", "y7s3|35": "Y7-Set3-V36-Algebraic-notation-substitution", "y7s3|36": "Y7-Set3-V37-Collecting-like-terms", "y7s3|37": "Y7-Set3-V38-Equivalent-fractions", "y7s3|38": "Y7-Set3-V39-Fractions-decimals-percentages", "y7s3|39": "Y7-Set3-V40-Angles", "y8s2|1": "Y8-Set2-V2-Laws-of-indices", "y8s2|2": "Y8-Set2-V3-Expanding-factorising", "y8s2|3": "Y8-Set2-V4-Equations-with-brackets", "y8s2|4": "Y8-Set2-V5-Inequalities", "y8s2|5": "Y8-Set2-V6-Ratio-proportion", "y8s2|6": "Y8-Set2-V7-Percentage-change", "y8s2|7": "Y8-Set2-V8-Circles-circumference-area", "y10s1|0": "Y10-Set1-V1-Surds", "y10s1|1": "Y10-Set1-V2-Fractional-negative-indices", "y10s1|2": "Y10-Set1-V3-Factorising-harder-quadratics", "y10s1|3": "Y10-Set1-V4-Completing-the-square", "y10s1|4": "Y10-Set1-V5-Simultaneous-equations", "y10s1|5": "Y10-Set1-V6-Circle-theorems", "y10s1|6": "Y10-Set1-V7-Vectors", "y10s1|7": "Y10-Set1-V8-Venn-diagrams-conditional-probability", "y10s3|0": "Y10-Set3-V1-Expanding-factorising", "y10s3|1": "Y10-Set3-V2-Solving-linear-equations", "y10s3|2": "Y10-Set3-V3-Straight-line-graphs", "y10s3|3": "Y10-Set3-V4-Pythagoras-theorem", "y10s3|4": "Y10-Set3-V5-Ratio-problems", "y10s3|5": "Y10-Set3-V6-Compound-interest-depreciation", "y10s3|6": "Y10-Set3-V7-Angles-in-polygons", "y10s3|7": "Y10-Set3-V8-Probability-tree-diagrams", "y10s4|1": "Y10-Set4-V2-Negative-numbers", "y10s4|2": "Y10-Set4-V3-Fractions", "y10s4|3": "Y10-Set4-V4-Percentages-of-amounts", "y10s4|4": "Y10-Set4-V5-Simplifying-substituting", "y10s4|5": "Y10-Set4-V6-Solving-simple-equations", "y10s4|6": "Y10-Set4-V7-Angles-in-parallel-lines", "y10s4|7": "Y10-Set4-V8-Perimeter-area", "y10s4|14": "Y10-Set4-V15-Place-value-rounding"}; /* videos for groups without a slide deck: "group|topic index" -> video base */
+/* Weeks of a new scheme that reuse homework already made for another group: "group": { week: [source group, source index] } */
+const BORROW = { y11s3: { 1: ["y11s2", 1], 2: ["y11s2", 0], 3: ["y8s2", 4], 4: ["y11s4", 0], 5: ["y11s2", 7], 7: ["y11s2", 6], 8: ["y11s4", 4], 9: ["y11s2", 3], 10: ["y11s2", 4] } };
+const borrowLater = () => { for (const [g, W] of Object.entries(BORROW)){ if (!HWX[g]) continue; for (const [k, [sg, si]] of Object.entries(W)){ const i = +k; if (HWX[g].weeks[i]) continue; const S = hwInfo(sg, si); if (!S || !S.hw) continue;
+  HWX[g].weeks[i] = { mg: S.prac, hw: S.hw }; HWXB[g][i] = S.base; const et = etOf(sg, si); if (et){ ETX[g][i] = et; KEYS[g][i] = KEYS[sg] && KEYS[sg][si] } const vb = lessonBase(sg, si) || VIDKEY[sg + "|" + si]; if (vb) VIDKEY[g + "|" + i] = vb } } };
 const vidBase = (g, i) => lessonBase(g, i) || VIDKEY[g + "|" + i] || null;
-function curLessonIdx(g){ if (Y11G(g)) return CUR; if (isSch(g)) return SCUR; const L = libOf(g)[0]; if (L) return L.i; const B = bankOf(g); return B.length ? B[0] : -1 }
+/* Which homework each teaching week uses (week k = SOW_D[k]); changes automatically every Monday */
+const WEEKPLAN = { y4: [0,32,33,34,35,36,37,38,39], y7s3: [0,32,33,34,35,36,37,38,39], y8s2: [0,1,2,3,4,5,6,7], y10s1: [0,1,2,3,4,5,6,7], y10s3: [0,1,2,3,4,5,6,7], y10s4: [0,1,2,3,4,5,6,7,14] };
+function curLessonIdx(g){ if (Y11G(g)) return CUR; if (WEEKPLAN[g]) return SCUR < WEEKPLAN[g].length ? WEEKPLAN[g][SCUR] : -1; if (isSch(g)) return SCUR; const L = libOf(g)[0]; if (L) return L.i; const B = bankOf(g); return B.length ? B[0] : -1 }
 function videoOf(g, i){ const b = vidBase(g, i); return b && VIDEOS[b] ? { src: VIDEOS[b], poster: VPOST[b] || "", topic: topicOf(g, i) } : null }
 function renderVideo(g){
   const box = document.getElementById("vidBox"), sec = document.getElementById("video"); if (!box) return;
   let v = null;
   if (!TEACHER && typeof TESTS !== "undefined"){ /* a homework Mr Ali has set takes priority: show that topic's video */
-    const T = TESTS.filter(t => t.g === g).sort((x, y) => y.n - x.n)[0], m = T && String(T.r[0]).match(/^h:(.+):\d+$/), at = m && baseIndex()[m[1]];
+    const T = recentTest(g), m = T && String(T.r[0]).match(/^h:(.+):\d+$/), at = m && baseIndex()[m[1]];
     if (at) v = videoOf(at.g, at.i) || (VIDEOS[m[1]] ? { src: VIDEOS[m[1]], poster: VPOST[m[1]] || "", topic: hwInfo(at.g, at.i).topic } : null) }
   v = v || videoOf(g, curLessonIdx(g));
   if (!v){ sec.dataset.empty = "1"; box.innerHTML = `<p class="tiernote" style="margin:0">The video for this week's topic will appear here.</p>`; return }
@@ -1865,8 +1871,9 @@ function resolveRef(ref){
   const P = papById(m[2]), q = P && P.questions[k]; return q && Array.isArray(q.key) ? { q: q.q, marks: q.marks, key: q.key, topic: q.topic } : null }
 let TESTS = []; try { TESTS = JSON.parse(localStorage.getItem("onmaths-tests") || "[]") || [] } catch(e){}
 const testOf = (g, n) => TESTS.find(t => t.g === g && t.n === n);
+const recentTest = g => TESTS.filter(t => t.g === g && (!t.c || Date.now() - Date.parse(t.c) < 10 * 864e5)).sort((a, b) => b.n - a.n)[0] || null;
 function addTest(T){ if (!T || !T.g || !T.n || !Array.isArray(T.r)) return; TESTS = TESTS.filter(t => !(t.g === T.g && t.n === T.n)); TESTS.push(T); if (!TEACHER){ try { localStorage.setItem("onmaths-tests", JSON.stringify(TESTS)) } catch(e){} } }
-const testLink = T => `${STUDENT_URL}?t=${b64u(JSON.stringify({ g: T.g, n: T.n, title: T.title, r: T.r, d: T.d }))}#${T.g}`;
+const testLink = T => `${STUDENT_URL}?t=${b64u(JSON.stringify({ g: T.g, n: T.n, title: T.title, r: T.r, d: T.d, c: T.c }))}#${T.g}`;
 try { const tp = new URLSearchParams(location.search).get("t"); if (tp){ const T = JSON.parse(decodeURIComponent(escape(atob(tp.replace(/-/g, "+").replace(/_/g, "/"))))); if (T && T.r.every(r => resolveRef(r))) addTest(T) } } catch(e){}
 function formSpec(box){
   if (box.dataset.test){ const [g, n] = box.dataset.test.split("|"), T = testOf(g, +n);
@@ -1930,7 +1937,7 @@ const pnorm = x => String(x || "").trim().toLowerCase().split(/\s+/)[0] || "";
 function papersFor(g){ const me = pnorm(myName());
   return OPAPERS.filter(P => P.group === g && Array.isArray(P.questions) && P.questions.length && P.questions.every(q => Array.isArray(q.key) && q.key.length) && (TEACHER || /all pupils/i.test(P.student) || (me && pnorm(P.student) === me))).sort((a, b) => /^y11/.test(g) ? ((papKind(a) === "B" ? 1 : 0) - (papKind(b) === "B" ? 1 : 0) || papNum(b) - papNum(a)) : ((papKind(a) === "B" ? -1 : 0) - (papKind(b) === "B" ? -1 : 0) || papNum(b) - papNum(a))) }
 function renderPapers(g){
-  if (!paplist) return; const L = papersFor(g), TT = TESTS.filter(t => t.g === g && t.r.every(r => resolveRef(r))).sort((a, b) => b.n - a.n);
+  if (!paplist) return; if (LOCKED){ paplist.innerHTML = ""; studentWeekView(g); return } const L = papersFor(g), TT = TESTS.filter(t => t.g === g && t.r.every(r => resolveRef(r))).sort((a, b) => b.n - a.n);
   if (!L.length && !TT.length){ paplist.innerHTML = ""; return }
   paplist.innerHTML = (TT.length ? `<h3 class="hw-h">${TEACHER ? "Tests from Mr Ali" : "📝 Homework from Mr Ali"}</h3>` + TT.map((T, k) => { const qs = T.r.map(resolveRef), tot = qs.reduce((a, q) => a + q.marks, 0);
     return `<details class="hwk current"${k === 0 && !TEACHER ? " open" : ""}><summary><span class="num">Test</span><span class="dt">${esc(T.d || "")}</span><span class="tp">${esc(T.title)}</span><span class="status ready">${qs.length} questions</span></summary><div class="hwbody"><p class="tiernote" style="margin:4px 0 8px">${qs.length} questions · ${tot} marks · do your working on paper</p><div class="hwon" data-test="${esc(T.g)}|${T.n}"><button type="button" class="hw-open">👉 Press here to start this test</button><div class="hwform" hidden></div></div></div></details>` }).join("") : "") +
@@ -1938,8 +1945,27 @@ function renderPapers(g){
     const tot = P.questions.reduce((a, q) => a + q.marks, 0);
     return `<details class="hwk${k === 0 ? " current" : ""}"${k === 0 && !TEACHER ? " open" : ""}><summary><span class="num">${papKind(P) === "B" ? "Baseline" : "Paper"}</span><span class="dt">${esc(P.week || "")}</span><span class="tp">${esc(P.title)}${TEACHER ? " · " + esc(P.student) : ""}</span><span class="status ready">${P.calc ? "Calculator" : "Non-calculator"}</span></summary><div class="hwbody"><p class="tiernote" style="margin:4px 0 8px">${P.questions.length} questions · ${tot} marks · 1 hour · ${P.calc ? "you may use a calculator" : "no calculator"}</p><div class="hwon" data-pap="${esc(P.id)}"><button type="button" class="hw-open">👉 Press here to start this paper</button><div class="hwform" hidden></div></div></div></details>`;
   }).join("") : "");
-  if (LOCKED && /^y11/.test(g)) y11PaperHomework();
 }
+/* Student page: only this week's work. 1) homework Mr Ali has set (a recent test), otherwise this week's topic homework; 2) this week's exam paper. */
+function studentWeekView(g){
+  if (!LOCKED || !hwlist) return;
+  const T = recentTest(g), ci = curLessonIdx(g), I = ci >= 0 ? hwInfo(g, ci) : null, wk = I && I.hw && HKEYS[I.base];
+  const L = papersFor(g), W = L.filter(P => papKind(P) === "P").sort((a, b) => papNum(b) - papNum(a))[0], P = W || L.find(x => papKind(x) === "B");
+  const sec = (title, body) => `<h3 class="hw-h">${title}</h3>` + body;
+  let h = "";
+  if (T){ const qs = T.r.map(resolveRef); if (qs.every(Boolean)){ const tot = qs.reduce((a, q) => a + q.marks, 0);
+    h += sec("📝 This week's homework from Mr Ali", `<details class="hwk current" open><summary><span class="num">Homework</span><span class="dt">${esc(T.d || "")}</span><span class="tp">${esc(T.title.replace(/^Homework:\s*/, ""))}</span><span class="status ready">${qs.length} questions</span></summary><div class="hwbody"><p class="tiernote" style="margin:4px 0 8px">${qs.length} questions · ${tot} marks · do your working on paper</p><div class="hwon" data-test="${esc(T.g)}|${T.n}"><button type="button" class="hw-open">👉 Press here to start</button><div class="hwform" hidden></div></div></div></details>`) } }
+  else if (wk) h += sec(`📝 This week's homework: ${esc(I.topic)}`, hwCard(g, ci, "This week", "", true, "This week"));
+  if (P){ const tot = P.questions.reduce((a, q) => a + q.marks, 0);
+    h += sec(papKind(P) === "B" ? "📝 Baseline paper" : "📝 This week's exam paper", `<p class="tiernote" style="margin:0 0 6px">Do it like a real exam: 1 hour, working on paper, then type your answers.</p><details class="hwk"${h ? "" : " open"}><summary><span class="num">${papKind(P) === "B" ? "Baseline" : "Paper"}</span><span class="dt">${esc(P.week || "")}</span><span class="tp">${esc(P.title)}</span><span class="status ready">${P.calc ? "Calculator" : "Non-calculator"}</span></summary><div class="hwbody"><p class="tiernote" style="margin:4px 0 8px">${P.questions.length} questions · ${tot} marks · 1 hour · ${P.calc ? "you may use a calculator" : "no calculator"}</p><div class="hwon" data-pap="${esc(P.id)}"><button type="button" class="hw-open">👉 Press here to start your paper</button><div class="hwform" hidden></div></div></div></details>`) }
+  if (!h) h = `<p class="tiernote">No homework has been set yet this week. Check back soon.</p>`;
+  hwlist.hidden = false;
+  hwlist.innerHTML = (h.includes("hwon") ? `<button type="button" class="hw-go-now">👉 Press here to do your homework</button>` : "") + h;
+  const first = hwlist.querySelector("details[open] .hwon") || hwlist.querySelector(".hwon"); if (first){ first.closest("details").open = true; drawHwForm(first) }
+  const go = hwlist.querySelector(".hw-go-now"); if (go) go.onclick = () => { const d = first.closest("details"); d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" }); const f = d.querySelector(".hwform input"); if (f) setTimeout(() => f.focus({ preventScroll: true }), 400) };
+  renderVideo(g);
+}
+function y11PaperHomework(){}
 /* Year 11 students: this week's exam paper IS the homework, shown first and opened ready to do */
 function y11PaperHomework(){
   const first = paplist.querySelector("details:has([data-pap])"); if (!first) return;
@@ -1957,7 +1983,7 @@ function y11PaperHomework(){
   {  go.textContent = "👉 Press here to do your exam paper homework"; paplist.prepend(go); hwlist.querySelectorAll(".hw-go-now").forEach(x => x.remove()); go.onclick = () => { first.open = true; first.scrollIntoView({ behavior: "smooth", block: "start" }); const f = first.querySelector(".hwform input"); if (f) setTimeout(() => f.focus({ preventScroll: true }), 400) } }
 }
 { const rh = renderHw; renderHw = gid => { rh(gid); renderPapers(gid) } }
-if (!TEACHER) fetch("tests.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : []).then(L => { if (!Array.isArray(L)) return; L.forEach(T => { if (T && T.g && T.n && Array.isArray(T.r) && T.r.every(r => resolveRef(r))) addTest({ g: T.g, n: T.n, title: T.title, r: T.r, d: T.d }) }); if (hwGroup){ renderPapers(hwGroup); renderVideo(hwGroup) } }).catch(() => {});
+if (!TEACHER) fetch("tests.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : []).then(L => { if (!Array.isArray(L)) return; L.forEach(T => { if (T && T.g && T.n && Array.isArray(T.r) && T.r.every(r => resolveRef(r))) addTest({ g: T.g, n: T.n, title: T.title, r: T.r, d: T.d, c: T.c }) }); if (hwGroup){ renderPapers(hwGroup); renderVideo(hwGroup) } }).catch(() => {});
 fetch("papers.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : []).then(L => { if (!Array.isArray(L)) return; L.forEach(P => { if (P && P.id && !papById(P.id)) OPAPERS.push(P) }); if (hwGroup) renderPapers(hwGroup) }).catch(() => {});
 /* ===== My group ===== */
 const groupPills = document.getElementById("groupPills");
@@ -2332,7 +2358,7 @@ if (TEACHER){
     if (!items.length){ st.textContent = "Keep at least one question."; return }
     if (!xdb){ st.textContent = "Open the teacher site in Claude while signed in to save tests."; return }
     const n = Math.max(0, ...TESTS.filter(t => t.g === draft.g).map(t => t.n)) + 1, d = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-    const T = { g: draft.g, n, title: draft.title, r: items.map(x => x.ref), d };
+    const T = { g: draft.g, n, title: draft.title, r: items.map(x => x.ref), d, c: new Date().toISOString() };
     st.textContent = "Saving…";
     try { await xdb.doc(`tests/${T.g}-${T.n}`).set({ ...T, created: new Date().toISOString() }); addTest(T); prev.innerHTML = ""; draft = null; st.textContent = `Saved "${T.title}". Send the link below to your ${gname(T.g)} students.`; renderSaved(T) }
     catch(err){ st.textContent = "Couldn't save the test. Check your connection and try again." } });
@@ -2595,6 +2621,7 @@ async function reportPdf(R){
     const u = URL.createObjectURL(blob), a = document.createElement("a"); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); toast("Downloading " + name);
   } catch(err){ if (!err || err.code !== "declined") toast("Couldn't download. Open the link in Safari or Chrome and try again.") }
 }
+try { borrowLater() } catch(e){}
 { let g0 = null; try { g0 = localStorage.getItem("onmaths-group") } catch(e){}
   const h = location.hash.slice(1), R = h.startsWith("report=") ? readReport(h.slice(7)) : null;
   if (R) setGroup(R.g, false); else if (HWGROUPS.some(x => x[0] === h)) setGroup(h, true); else setGroup(HWGROUPS.some(x => x[0] === g0) ? g0 : "y11s4", false);
@@ -2619,14 +2646,7 @@ function lockSite(g){
   }
   try { localStorage.setItem("onmaths-lock", g) } catch(e){}
   LOCKED = true;
-  { const rh = renderHw; renderHw = gid => { rh(gid); hwlist.querySelectorAll(".hwon").forEach(b => { const o = b.querySelector(".hw-open"); if (o) o.textContent = "👉 Press here to do this homework now" });
-    { const bh = [...hwlist.querySelectorAll("h3.hw-h")].find(h => /bank/i.test(h.textContent)), other = [...hwlist.querySelectorAll("details.hwk")].filter(d => !bh || !(bh.compareDocumentPosition(d) & Node.DOCUMENT_POSITION_FOLLOWING));
-      if (bh && other.length){ let n = bh.nextElementSibling; while (n && !n.matches("h3")){ const x = n; n = n.nextElementSibling; x.remove() } bh.remove() }
-      else if (bh){ bh.textContent = "Your homework"; let n = bh.nextElementSibling; if (n && n.matches("p.tiernote")) n.remove(); hwlist.querySelectorAll("p.tiernote").forEach(x => { if (/No lessons yet/.test(x.textContent)) x.remove() });
-        hwlist.querySelectorAll("h3.hw-h").forEach(h => { if (h !== bh && !h.nextElementSibling?.matches("details")) h.remove() });
-        const first = hwlist.querySelector("details.hwk"); if (first){ first.open = true; first.classList.add("current") } } }
-    hwlist.querySelectorAll("h3.hw-h").forEach(h => { if (/scheme of work|Lessons taught/i.test(h.textContent)) h.textContent = "Your homework" });
-    { const cur = hwlist.querySelector("details[open]"); if (cur && cur.querySelector(".hwon") && !(/^y11/.test(gid) && paplist && paplist.querySelector("[data-pap]"))){ const go = document.createElement("button"); go.type = "button"; go.className = "hw-go-now"; go.textContent = "👉 Press here to do your homework now"; go.onclick = () => { const f = cur.querySelector(".hwform input, .hwform .hopt"); cur.scrollIntoView({ behavior: "smooth", block: "start" }); if (f) setTimeout(() => f.focus({ preventScroll: true }), 400) }; hwlist.prepend(go) } } hwlist.querySelectorAll("details.hwk").forEach(d => { if (d.querySelector(".status.soon")) d.remove() }); hwlist.querySelectorAll(".hol").forEach(x => x.remove()); hwlist.querySelectorAll(".blk").forEach(x => { const n = x.nextElementSibling; if (!n || !n.matches("details.hwk")) x.remove() }); const cur = hwlist.querySelector("details[open] .hwon"); if (cur) drawHwForm(cur) } }
+  { const rh = renderHw; renderHw = gid => { rh(gid); studentWeekView(gid) } }
   if (!fromLink) setGroup(g, false); else renderHw(g);
   setTimeout(() => { const t = document.getElementById(location.hash.startsWith("#report=") ? "y11hw" : new URLSearchParams(location.search).get("t") ? "paplist" : "video"); if (t && fromLink) t.scrollIntoView({ behavior: "smooth" }) }, 50);
   hide(".gbar"); hide("#groupPills"); hide(".picker");
