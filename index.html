@@ -1759,7 +1759,11 @@ function curLessonIdx(g){ if (Y11G(g)) return CUR; if (isSch(g)) return SCUR; co
 function videoOf(g, i){ const b = vidBase(g, i); return b && VIDEOS[b] ? { src: VIDEOS[b], poster: VPOST[b] || "", topic: topicOf(g, i) } : null }
 function renderVideo(g){
   const box = document.getElementById("vidBox"), sec = document.getElementById("video"); if (!box) return;
-  const v = videoOf(g, curLessonIdx(g));
+  let v = null;
+  if (!TEACHER && typeof TESTS !== "undefined"){ /* a homework Mr Ali has set takes priority: show that topic's video */
+    const T = TESTS.filter(t => t.g === g).sort((x, y) => y.n - x.n)[0], m = T && String(T.r[0]).match(/^h:(.+):\d+$/), at = m && baseIndex()[m[1]];
+    if (at) v = videoOf(at.g, at.i) || (VIDEOS[m[1]] ? { src: VIDEOS[m[1]], poster: VPOST[m[1]] || "", topic: hwInfo(at.g, at.i).topic } : null) }
+  v = v || videoOf(g, curLessonIdx(g));
   if (!v){ sec.dataset.empty = "1"; box.innerHTML = `<p class="tiernote" style="margin:0">The video for this week's topic will appear here.</p>`; return }
   delete sec.dataset.empty;
   box.innerHTML = `<p class="vt">${esc(gname(g))} · ${esc(v.topic)}</p><video controls playsinline preload="metadata" src="${v.src}"${v.poster ? ` poster="${v.poster}"` : ""}></video>`;
@@ -1953,7 +1957,7 @@ function y11PaperHomework(){
   {  go.textContent = "👉 Press here to do your exam paper homework"; paplist.prepend(go); hwlist.querySelectorAll(".hw-go-now").forEach(x => x.remove()); go.onclick = () => { first.open = true; first.scrollIntoView({ behavior: "smooth", block: "start" }); const f = first.querySelector(".hwform input"); if (f) setTimeout(() => f.focus({ preventScroll: true }), 400) } }
 }
 { const rh = renderHw; renderHw = gid => { rh(gid); renderPapers(gid) } }
-if (!TEACHER) fetch("tests.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : []).then(L => { if (!Array.isArray(L)) return; L.forEach(T => { if (T && T.g && T.n && Array.isArray(T.r) && T.r.every(r => resolveRef(r))) addTest({ g: T.g, n: T.n, title: T.title, r: T.r, d: T.d }) }); if (hwGroup) renderPapers(hwGroup) }).catch(() => {});
+if (!TEACHER) fetch("tests.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : []).then(L => { if (!Array.isArray(L)) return; L.forEach(T => { if (T && T.g && T.n && Array.isArray(T.r) && T.r.every(r => resolveRef(r))) addTest({ g: T.g, n: T.n, title: T.title, r: T.r, d: T.d }) }); if (hwGroup){ renderPapers(hwGroup); renderVideo(hwGroup) } }).catch(() => {});
 fetch("papers.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : []).then(L => { if (!Array.isArray(L)) return; L.forEach(P => { if (P && P.id && !papById(P.id)) OPAPERS.push(P) }); if (hwGroup) renderPapers(hwGroup) }).catch(() => {});
 /* ===== My group ===== */
 const groupPills = document.getElementById("groupPills");
