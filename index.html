@@ -1947,6 +1947,7 @@ function y11PaperHomework(){
   hwlist.querySelectorAll("h3.hw-h").forEach(x => { if (/Your homework|scheme of work|Lessons taught/i.test(x.textContent)) x.textContent = "Topic practice (optional)" });
   hwlist.querySelectorAll("details.hwk[open]").forEach(d => d.open = false);
   hwlist.querySelectorAll("details.hwk").forEach(d => { const m = d.id.match(/^hw-(y11s[24])-(\d+)$/); if (m && +m[2] > CUR) d.remove() });
+  hwlist.hidden = true; /* Year 11: only Mr Ali's set homework and the weekly paper */
   if (paplist.querySelector("details:has([data-pap]) .num") && [...paplist.querySelectorAll("details:has([data-pap])")].some(d => /Paper/.test(d.querySelector(".num").textContent))) paplist.querySelectorAll("details:has([data-pap])").forEach(d => { if (/Baseline/.test(d.querySelector(".num").textContent)) d.remove() });
   let go = document.querySelector(".hw-go-now"); if (!go){ go = document.createElement("button"); go.type = "button"; go.className = "hw-go-now" }
   {  go.textContent = "👉 Press here to do your exam paper homework"; paplist.prepend(go); hwlist.querySelectorAll(".hw-go-now").forEach(x => x.remove()); go.onclick = () => { first.open = true; first.scrollIntoView({ behavior: "smooth", block: "start" }); const f = first.querySelector(".hwform input"); if (f) setTimeout(() => f.focus({ preventScroll: true }), 400) } }
