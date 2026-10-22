@@ -1871,7 +1871,7 @@ function resolveRef(ref){
   const P = papById(m[2]), q = P && P.questions[k]; return q && Array.isArray(q.key) ? { q: q.q, marks: q.marks, key: q.key, topic: q.topic } : null }
 let TESTS = []; try { TESTS = JSON.parse(localStorage.getItem("onmaths-tests") || "[]") || [] } catch(e){}
 const testOf = (g, n) => TESTS.find(t => t.g === g && t.n === n);
-const recentTest = g => TESTS.filter(t => t.g === g && (!t.c || Date.now() - Date.parse(t.c) < 10 * 864e5)).sort((a, b) => b.n - a.n)[0] || null;
+const recentTest = g => TESTS.filter(t => t.g === g && (!t.s || pnorm(t.s) === pnorm(myName())) && (!t.c || Date.now() - Date.parse(t.c) < 10 * 864e5)).sort((a, b) => b.n - a.n)[0] || null;
 function addTest(T){ if (!T || !T.g || !T.n || !Array.isArray(T.r)) return; TESTS = TESTS.filter(t => !(t.g === T.g && t.n === T.n)); TESTS.push(T); if (!TEACHER){ try { localStorage.setItem("onmaths-tests", JSON.stringify(TESTS)) } catch(e){} } }
 const testLink = T => `${STUDENT_URL}?t=${b64u(JSON.stringify({ g: T.g, n: T.n, title: T.title, r: T.r, d: T.d, c: T.c }))}#${T.g}`;
 try { const tp = new URLSearchParams(location.search).get("t"); if (tp){ const T = JSON.parse(decodeURIComponent(escape(atob(tp.replace(/-/g, "+").replace(/_/g, "/"))))); if (T && T.r.every(r => resolveRef(r))) addTest(T) } } catch(e){}
@@ -1983,7 +1983,7 @@ function y11PaperHomework(){
   {  go.textContent = "👉 Press here to do your exam paper homework"; paplist.prepend(go); hwlist.querySelectorAll(".hw-go-now").forEach(x => x.remove()); go.onclick = () => { first.open = true; first.scrollIntoView({ behavior: "smooth", block: "start" }); const f = first.querySelector(".hwform input"); if (f) setTimeout(() => f.focus({ preventScroll: true }), 400) } }
 }
 { const rh = renderHw; renderHw = gid => { rh(gid); renderPapers(gid) } }
-if (!TEACHER) fetch("tests.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : []).then(L => { if (!Array.isArray(L)) return; L.forEach(T => { if (T && T.g && T.n && Array.isArray(T.r) && T.r.every(r => resolveRef(r))) addTest({ g: T.g, n: T.n, title: T.title, r: T.r, d: T.d, c: T.c }) }); if (hwGroup){ renderPapers(hwGroup); renderVideo(hwGroup) } }).catch(() => {});
+if (!TEACHER) fetch("tests.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : []).then(L => { if (!Array.isArray(L)) return; L.forEach(T => { if (T && T.g && T.n && Array.isArray(T.r) && T.r.every(r => resolveRef(r))) addTest({ g: T.g, n: T.n, title: T.title, r: T.r, d: T.d, c: T.c, s: T.s }) }); if (hwGroup){ renderPapers(hwGroup); renderVideo(hwGroup) } }).catch(() => {});
 fetch("papers.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : []).then(L => { if (!Array.isArray(L)) return; L.forEach(P => { if (P && P.id && !papById(P.id)) OPAPERS.push(P) }); if (hwGroup) renderPapers(hwGroup) }).catch(() => {});
 /* ===== My group ===== */
 const groupPills = document.getElementById("groupPills");
