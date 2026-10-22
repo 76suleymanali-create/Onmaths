@@ -1772,7 +1772,7 @@ function renderVideo(g){
   const box = document.getElementById("vidBox"), sec = document.getElementById("video"); if (!box) return;
   let v = null;
   if (!TEACHER && typeof TESTS !== "undefined"){ /* a homework Mr Ali has set takes priority: show that topic's video */
-    const T = recentTest(g), m = T && String(T.r[0]).match(/^h:(.+):\d+$/), at = m && baseIndex()[m[1]];
+    const T = recentTest(g), m = T && !T.w && String(T.r[0]).match(/^h:(.+):\d+$/), at = m && baseIndex()[m[1]];
     if (at) v = videoOf(at.g, at.i) || (VIDEOS[m[1]] ? { src: VIDEOS[m[1]], poster: VPOST[m[1]] || "", topic: hwInfo(at.g, at.i).topic } : null) }
   v = v || videoOf(g, curLessonIdx(g));
   if (!v){ sec.dataset.empty = "1"; box.innerHTML = `<p class="tiernote" style="margin:0">The video for this week's topic will appear here.</p>`; return }
@@ -1960,7 +1960,7 @@ function studentWeekView(g){
   let h = "";
   if (T){ const qs = T.r.map(resolveRef); if (qs.every(Boolean)){ const tot = qs.reduce((a, q) => a + q.marks, 0);
     h += sec("📝 This week's homework from Mr Ali", `<details class="hwk current" open><summary><span class="num">Homework</span><span class="dt">${esc(T.d || "")}</span><span class="tp">${esc(T.title.replace(/^Homework:\s*/, ""))}</span><span class="status ready">${qs.length} questions</span></summary><div class="hwbody"><p class="tiernote" style="margin:4px 0 8px">${qs.length} questions · ${tot} marks · do your working on paper</p><div class="hwon" data-test="${esc(T.g)}|${T.n}"><button type="button" class="hw-open">👉 Press here to start</button><div class="hwform" hidden></div></div></div></details>`) } }
-  else if (wk) h += sec(`📝 This week's homework: ${esc(I.topic)}`, hwCard(g, ci, "This week", "", true, "This week"));
+  if (wk && (!T || T.w)) h += sec(`📝 ${T ? "Also this week" : "This week's homework"}: ${esc(I.topic)}`, hwCard(g, ci, "This week", "", !T, "This week"));
   if (P){ const tot = P.questions.reduce((a, q) => a + q.marks, 0);
     h += sec(papKind(P) === "B" ? "📝 Baseline paper" : "📝 This week's exam paper", `<p class="tiernote" style="margin:0 0 6px">Do it like a real exam: 1 hour, working on paper, then type your answers.</p><details class="hwk"${h ? "" : " open"}><summary><span class="num">${papKind(P) === "B" ? "Baseline" : "Paper"}</span><span class="dt">${esc(P.week || "")}</span><span class="tp">${esc(P.title)}</span><span class="status ready">${P.calc ? "Calculator" : "Non-calculator"}</span></summary><div class="hwbody"><p class="tiernote" style="margin:4px 0 8px">${P.questions.length} questions · ${tot} marks · 1 hour · ${P.calc ? "you may use a calculator" : "no calculator"}</p><div class="hwon" data-pap="${esc(P.id)}"><button type="button" class="hw-open">👉 Press here to start your paper</button><div class="hwform" hidden></div></div></div></details>`) }
   if (!h) h = `<p class="tiernote">No homework has been set yet this week. Check back soon.</p>`;
@@ -1988,7 +1988,7 @@ function y11PaperHomework(){
   {  go.textContent = "👉 Press here to do your exam paper homework"; paplist.prepend(go); hwlist.querySelectorAll(".hw-go-now").forEach(x => x.remove()); go.onclick = () => { first.open = true; first.scrollIntoView({ behavior: "smooth", block: "start" }); const f = first.querySelector(".hwform input"); if (f) setTimeout(() => f.focus({ preventScroll: true }), 400) } }
 }
 { const rh = renderHw; renderHw = gid => { rh(gid); renderPapers(gid) } }
-if (!TEACHER) fetch("tests.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : []).then(L => { if (!Array.isArray(L)) return; L.forEach(T => { if (T && T.g && T.n && Array.isArray(T.r) && T.r.every(r => resolveRef(r))) addTest({ g: T.g, n: T.n, title: T.title, r: T.r, d: T.d, c: T.c, s: T.s }) }); if (hwGroup){ renderPapers(hwGroup); renderVideo(hwGroup) } }).catch(() => {});
+if (!TEACHER) fetch("tests.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : []).then(L => { if (!Array.isArray(L)) return; L.forEach(T => { if (T && T.g && T.n && Array.isArray(T.r) && T.r.every(r => resolveRef(r))) addTest({ g: T.g, n: T.n, title: T.title, r: T.r, d: T.d, c: T.c, s: T.s, w: T.w }) }); if (hwGroup){ renderPapers(hwGroup); renderVideo(hwGroup) } }).catch(() => {});
 fetch("papers.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : []).then(L => { if (!Array.isArray(L)) return; L.forEach(P => { if (P && P.id && !papById(P.id)) OPAPERS.push(P) }); if (hwGroup) renderPapers(hwGroup) }).catch(() => {});
 /* ===== My group ===== */
 const groupPills = document.getElementById("groupPills");
