@@ -1928,7 +1928,7 @@ function papersFor(g){ const me = pnorm(myName());
 function renderPapers(g){
   if (!paplist) return; const L = papersFor(g), TT = TESTS.filter(t => t.g === g && t.r.every(r => resolveRef(r))).sort((a, b) => b.n - a.n);
   if (!L.length && !TT.length){ paplist.innerHTML = ""; return }
-  paplist.innerHTML = (TT.length ? `<h3 class="hw-h">Tests from Mr Ali</h3>` + TT.map((T, k) => { const qs = T.r.map(resolveRef), tot = qs.reduce((a, q) => a + q.marks, 0);
+  paplist.innerHTML = (TT.length ? `<h3 class="hw-h">${TEACHER ? "Tests from Mr Ali" : "📝 Homework from Mr Ali"}</h3>` + TT.map((T, k) => { const qs = T.r.map(resolveRef), tot = qs.reduce((a, q) => a + q.marks, 0);
     return `<details class="hwk current"${k === 0 && !TEACHER ? " open" : ""}><summary><span class="num">Test</span><span class="dt">${esc(T.d || "")}</span><span class="tp">${esc(T.title)}</span><span class="status ready">${qs.length} questions</span></summary><div class="hwbody"><p class="tiernote" style="margin:4px 0 8px">${qs.length} questions · ${tot} marks · do your working on paper</p><div class="hwon" data-test="${esc(T.g)}|${T.n}"><button type="button" class="hw-open">👉 Press here to start this test</button><div class="hwform" hidden></div></div></div></details>` }).join("") : "") +
     (L.length ? `<h3 class="hw-h">Exam papers</h3><p class="tiernote" style="margin:0 0 6px">Do these like a real exam: 1 hour, working on paper${TEACHER ? "" : ", then type your answers"}.</p>` + L.map((P, k) => {
     const tot = P.questions.reduce((a, q) => a + q.marks, 0);
@@ -1946,6 +1946,8 @@ function y11PaperHomework(){
   const ob = first.querySelector(".hw-open"); if (ob) ob.textContent = "👉 Press here to start your paper";
   hwlist.querySelectorAll("h3.hw-h").forEach(x => { if (/Your homework|scheme of work|Lessons taught/i.test(x.textContent)) x.textContent = "Topic practice (optional)" });
   hwlist.querySelectorAll("details.hwk[open]").forEach(d => d.open = false);
+  hwlist.querySelectorAll("details.hwk").forEach(d => { const m = d.id.match(/^hw-(y11s[24])-(\d+)$/); if (m && +m[2] > CUR) d.remove() });
+  if (paplist.querySelector("details:has([data-pap]) .num") && [...paplist.querySelectorAll("details:has([data-pap])")].some(d => /Paper/.test(d.querySelector(".num").textContent))) paplist.querySelectorAll("details:has([data-pap])").forEach(d => { if (/Baseline/.test(d.querySelector(".num").textContent)) d.remove() });
   let go = document.querySelector(".hw-go-now"); if (!go){ go = document.createElement("button"); go.type = "button"; go.className = "hw-go-now" }
   {  go.textContent = "👉 Press here to do your exam paper homework"; paplist.prepend(go); hwlist.querySelectorAll(".hw-go-now").forEach(x => x.remove()); go.onclick = () => { first.open = true; first.scrollIntoView({ behavior: "smooth", block: "start" }); const f = first.querySelector(".hwform input"); if (f) setTimeout(() => f.focus({ preventScroll: true }), 400) } }
 }
