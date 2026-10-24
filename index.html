@@ -1924,6 +1924,10 @@ const testOf = (g, n) => TESTS.find(t => t.g === g && t.n === n);
 const recentTest = g => TESTS.filter(t => t.g === g && (!t.s || pnorm(t.s) === pnorm(myName())) && (!t.c || Date.now() - Date.parse(t.c) < 10 * 864e5)).sort((a, b) => b.n - a.n)[0] || null;
 function addTest(T){ if (!T || !T.g || !T.n || !Array.isArray(T.r)) return; TESTS = TESTS.filter(t => !(t.g === T.g && t.n === T.n)); TESTS.push(T); if (!TEACHER){ try { localStorage.setItem("onmaths-tests", JSON.stringify(TESTS)) } catch(e){} } }
 const testLink = T => `${STUDENT_URL}?t=${b64u(JSON.stringify({ g: T.g, n: T.n, title: T.title, r: T.r, d: T.d, c: T.c }))}#${T.g}`;
+/* Short homework links from Mr Ali: ?n=Name&hw=group.index&k=number#group */
+const hwLinkTest = () => { try { const q = new URLSearchParams(location.search), hw = q.get("hw"), k = +q.get("k"), g = (location.hash.match(/^#([a-z0-9]+)/) || [])[1];
+  if (!hw || !k || !g) return; const [sg, si] = hw.split("."), I = hwInfo(sg, +si); if (!I || !I.hw || !HKEYS[I.base]) return;
+  if (testOf(g, k)) return; addTest({ g, n: k, title: "Homework: " + I.topic, r: HKEYS[I.base].map((_, j) => `h:${I.base}:${j}`), d: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" }), c: new Date().toISOString(), s: q.get("n") || "" }) } catch(e){} };
 try { const tp = new URLSearchParams(location.search).get("t"); if (tp){ const T = JSON.parse(decodeURIComponent(escape(atob(tp.replace(/-/g, "+").replace(/_/g, "/"))))); if (T && T.r.every(r => resolveRef(r))) addTest(T) } } catch(e){}
 function formSpec(box){
   if (box.dataset.test){ const [g, n] = box.dataset.test.split("|"), T = testOf(g, +n);
@@ -2203,6 +2207,19 @@ if (TEACHER){
   showEl.addEventListener("change", () => { show = showEl.value; if (show !== "all"){ document.getElementById("trkGroup").value = show; const cur = students.find(x => x.id === sel); if (cur && cur.group !== show) sel = null } renderPills(); renderOverview(); renderPanel() });
   const vis = st => show === "all" || st.group === show;
   const pctClass = p => p >= 70 ? "pg" : p >= 40 ? "pa" : "pr";
+  function hwTopicOptions(g){ const own = [], other = {}; for (const [base, at] of Object.entries(baseIndex())){ const I = hwInfo(at.g, at.i), o = `<option value="${at.g}.${at.i}">${esc(I.topic)}</option>`; if (at.g === g) own.push([at.i, o]); else (other[at.g] = other[at.g] || []).push([at.i, o]) }
+    const srt = a => a.sort((x, y) => x[0] - y[0]).map(x => x[1]).join("");
+    return `<optgroup label="${esc(gname(g))}">${srt(own)}</optgroup>` + HWGROUPS.filter(([id]) => id !== g && other[id]).map(([id, n]) => `<optgroup label="${esc(n)}">${srt(other[id])}</optgroup>`).join("") }
+  async function setHomework(st){ const v = document.getElementById("shwTopic").value, [sg, si] = v.split("."), I = hwInfo(sg, +si), out = document.getElementById("shwOut");
+    if (!I || !HKEYS[I.base]){ out.textContent = "That topic can't be marked online yet."; return }
+    let n = 1; try { const qs = await db.collection("tests").get(); qs.docs.forEach(d => { const T = d.data(); if (T.g === st.group) n = Math.max(n, (+T.n || 0) + 1) }) } catch(e){}
+    TESTS.filter(t => t.g === st.group).forEach(t => n = Math.max(n, t.n + 1));
+    const T = { g: st.group, n, title: "Homework: " + I.topic, r: HKEYS[I.base].map((_, j) => `h:${I.base}:${j}`), d: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" }), c: new Date().toISOString(), s: st.name };
+    try { await db.doc(`tests/${T.g}-${T.n}`).set(T); addTest(T) } catch(e){ out.textContent = "Couldn't save. Check your connection."; return }
+    const u = `${STUDENT_URL}?n=${encodeURIComponent(st.name)}&hw=${sg}.${si}&k=${n}#${st.group}`;
+    const msg = `Hello, this is Mr Ali from OnMaths 😊\n\n${st.name}'s maths homework this week is on ${I.topic} (${I.hw.length} questions). It is done online, marked straight away, and the result comes to me automatically. There is a 2-minute video on the page to help.\n\n${u}\n\nPlease make sure it is completed before our next lesson.\n\nThank you,\nMr Ali`;
+    out.innerHTML = `<p class="tiernote" style="margin:6px 0">✓ Set: <b>${esc(I.topic)}</b>. Send this link (it puts the homework on ${esc(st.name)}'s page):</p><code>${esc(u)}</code><div class="tb-btns" style="margin-top:6px"><button type="button" data-stlink="${esc(u)}">Copy link</button><button type="button" data-stlink="${esc(msg)}">Copy WhatsApp message</button><a class="btn" style="padding:6px 12px" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(msg)}">Open WhatsApp</a></div>`;
+    status.textContent = `Homework set for ${st.name}: ${I.topic}.` }
   function paperFor(c, st){
     if (c.t === "A"){ const T = testOf(c.g, c.i + 1); if (!T) return null; const qs = T.r.map(resolveRef); return qs.every(Boolean) ? { title: `Test ${T.n}: ${T.title}`, week: T.d || "", student: "", questions: qs } : null }
     const L = OPAPERS.filter(P => P.group === c.g && papKind(P) === c.t && papNum(P) === c.i + 1 && Array.isArray(P.questions));
@@ -2253,6 +2270,8 @@ if (TEACHER){
     const st = students.find(x => x.id === sel); if (!st){ panel.innerHTML = ""; return }
     const S = stats(st), sc = scores[st.id] || {};
     let h = `<h3 style="font-size:1.4rem;margin:4px 0 6px">${esc(st.name)} <span class="tiernote">· ${esc(gname(st.group))}</span></h3>
+      <div class="tb-link sethw" style="margin:0 0 12px"><b>📝 Set ${esc(st.name)}'s homework this week</b><span class="tiernote" style="margin:0">Pick a topic. ${esc(st.name)} gets it online, marked straight away, with its video. Then send the link or message.</span>
+        <select id="shwTopic">${hwTopicOptions(st.group)}</select><button type="button" id="shwGo">Set homework</button><div id="shwOut"></div></div>
       <div class="tb-link" style="margin:0 0 12px"><b>${esc(st.name)}'s own link</b><span class="tiernote" style="margin:0">Send this to ${esc(st.name)}. It opens their class and fills in their name, so their results come to you automatically.</span><code>${esc(studentLink(st))}</code><button type="button" data-stlink="${esc(studentLink(st))}">Copy ${esc(st.name)}'s link</button></div>
       <div class="trk-code"><label for="trkCode"><b>Paste ${esc(st.name)}'s exit ticket or homework code</b></label><input id="trkCode" type="text" placeholder="e.g. Y11S4-W1-212-K or Y11S4-H1-22233-B" autocomplete="off" autocapitalize="characters"><button type="button" id="trkCodeBtn">Add marks</button></div>
       <div class="trk-sum"><div><b>${S.avg === null ? "–" : S.avg + "%"}</b><span>Average score</span></div><div><b>${S.rows.length}</b><span>Exit tickets done</span></div><div style="flex:1 1 220px"><b style="font-size:1rem">${S.weak.length ? S.weak.map(r => esc(topicOf(st.group, r.i)) + " (" + r.pct + "%)").join(", ") : "None yet"}</b><span>Topics to revisit (below 70%)</span></div></div>
@@ -2308,6 +2327,7 @@ if (TEACHER){
       try { await navigator.clipboard.writeText(txt); toast(pb.id === "prMsg" ? "Message copied. Paste it into WhatsApp, text or email." : "Link copied. Paste it into a message to the parent.") }
       catch(err){ out.innerHTML = `Press and hold to copy:<br><code class="pr-code">${esc(txt)}</code>`; selectEl(out.querySelector("code")) }
       return }
+    if (e.target.closest("#shwGo")){ const st = students.find(x => x.id === sel); if (st) setHomework(st); return }
     { const lb = e.target.closest("[data-stlink]"); if (lb){ try { navigator.clipboard.writeText(lb.dataset.stlink).then(() => toast("Link copied. Send it to the student."), () => toast("Press and hold the link to copy it.")) } catch(err){ toast("Press and hold the link to copy it.") } return } }
     if (e.target.closest("#trkCodeBtn")){
       const st = students.find(x => x.id === sel), c = readCode(document.getElementById("trkCode").value);
@@ -2721,6 +2741,7 @@ async function reportPdf(R){
   } catch(err){ if (!err || err.code !== "declined") toast("Couldn't download. Open the link in Safari or Chrome and try again.") }
 }
 try { tutorApply() } catch(e){ console.error(e) }
+try { if (!TEACHER) hwLinkTest() } catch(e){}
 try { borrowLater() } catch(e){}
 { let g0 = null; try { g0 = localStorage.getItem("onmaths-group") } catch(e){}
   const h = location.hash.slice(1), R = h.startsWith("report=") ? readReport(h.slice(7)) : null;
