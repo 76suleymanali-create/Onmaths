@@ -168,6 +168,36 @@ header nav a:hover{background:color-mix(in srgb,var(--band-ink) 15%,transparent)
 .tb-btns{display:flex;gap:8px;flex-wrap:wrap}
 .tb-q{padding:8px 0;border-bottom:1px dashed var(--line)}
 .tb-q small{opacity:.75}
+
+.sf{position:fixed;inset:0;z-index:300;background:rgba(10,10,30,.55);overflow-y:auto;padding:16px}
+body.sf-open{overflow:hidden}
+.sf-in{max-width:760px;margin:0 auto;background:var(--bg,#fff);border-radius:18px;padding:18px;border-top:8px solid var(--sc,var(--ink));box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.sf-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.sf-top h2{margin:2px 0;font-size:2rem;color:var(--sc)}
+.sf-eye{font-size:.8rem;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.05em}
+.sf-sub{font-weight:600}
+.sf-x{font-size:1.2rem;border:2px solid var(--ink);border-radius:50%;width:40px;height:40px;background:var(--card,#fff);cursor:pointer;color:var(--ink);flex:none}
+.sf-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}
+.sf-tiles div{background:color-mix(in srgb,var(--sc) 12%,var(--card,#fff));border-radius:12px;padding:10px;text-align:center}
+.sf-tiles b{display:block;font-size:1.4rem}.sf-tiles span{font-size:.78rem}
+@media(max-width:560px){.sf-tiles{grid-template-columns:repeat(2,1fr)}.sf{padding:6px}.sf-in{padding:14px}}
+.sf-card{background:var(--card,#fff);border:2px solid var(--line,#ddd);border-radius:14px;padding:12px 14px;margin:0 0 12px;display:grid;gap:8px}
+.sf-card h3{margin:0;font-size:1.1rem}.sf-card h4{margin:6px 0 0}
+.sf-card select,.sf-card input{width:100%;font:inherit;padding:8px;border:2px solid var(--line,#ccc);border-radius:10px;background:var(--bg,#fff);color:var(--ink)}
+.sf-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.sf-l{font-weight:700;min-width:110px}.sf-t{flex:1 1 200px}.sf-t small{opacity:.7}
+.sf-no{background:#FFE9D6;color:#8A3B00;border-radius:999px;padding:3px 10px;font-weight:700;font-size:.85rem}
+.sf-btns{display:flex;flex-wrap:wrap;gap:6px;margin:0}
+.sf-btns button,.sf-btns .btn,.sf-mini{font:inherit;font-size:.9rem;padding:7px 12px;border:2px solid var(--ink);border-radius:10px;background:var(--card,#fff);color:var(--ink);cursor:pointer;text-decoration:none}
+.sf-go{background:var(--sc,var(--ink))!important;color:#fff!important;border-color:var(--sc,var(--ink))!important;font-weight:700}
+.sf-mini{font-size:.8rem;padding:4px 10px;vertical-align:middle}
+.sf-prog{display:grid;gap:6px}
+.sf-pr{display:grid;grid-template-columns:100px 1fr 90px 44px;gap:8px;align-items:center;font-size:.9rem}
+.sf-k{font-size:.75rem;font-weight:700;opacity:.75}.sf-bar{height:10px;background:var(--line,#eee);border-radius:6px;overflow:hidden}
+.sf-bar i{display:block;height:100%;background:#2E9E5B}.sf-bar i.pa{background:#E0A000}.sf-bar i.pr{background:#D2463C}
+@media(max-width:560px){.sf-pr{grid-template-columns:1fr 60px 40px}.sf-k{grid-column:1/-1}}
+.sf-log{display:grid;grid-template-columns:110px 1fr;gap:8px;padding:6px 0;border-top:1px dashed var(--line,#ddd)}
+.sf-log em{display:block;font-size:.85rem;opacity:.8}
 .tb-link{display:grid;gap:6px;margin:10px 0;padding:12px;border:2px solid var(--ink);border-radius:12px;background:var(--card)}
 .tb-link code{word-break:break-all;font-size:.8rem}
 .tb-link button{justify-self:start;font:700 .9rem var(--body);border:2px solid var(--ink);border-radius:999px;padding:8px 14px;background:var(--hi);color:var(--hi-ink);cursor:pointer}
@@ -2210,16 +2240,16 @@ if (TEACHER){
   function hwTopicOptions(g){ const own = [], other = {}; for (const [base, at] of Object.entries(baseIndex())){ const I = hwInfo(at.g, at.i), o = `<option value="${at.g}.${at.i}">${esc(I.topic)}</option>`; if (at.g === g) own.push([at.i, o]); else (other[at.g] = other[at.g] || []).push([at.i, o]) }
     const srt = a => a.sort((x, y) => x[0] - y[0]).map(x => x[1]).join("");
     return `<optgroup label="${esc(gname(g))}">${srt(own)}</optgroup>` + HWGROUPS.filter(([id]) => id !== g && other[id]).map(([id, n]) => `<optgroup label="${esc(n)}">${srt(other[id])}</optgroup>`).join("") }
-  async function setHomework(st){ const v = document.getElementById("shwTopic").value, [sg, si] = v.split("."), I = hwInfo(sg, +si), out = document.getElementById("shwOut");
+  async function setHomework(st, root){ root = root || panel; const v = root.querySelector("#shwTopic").value, [sg, si] = v.split("."), I = hwInfo(sg, +si), out = root.querySelector("#shwOut");
     if (!I || !HKEYS[I.base]){ out.textContent = "That topic can't be marked online yet."; return }
     let n = 1; try { const qs = await db.collection("tests").get(); qs.docs.forEach(d => { const T = d.data(); if (T.g === st.group) n = Math.max(n, (+T.n || 0) + 1) }) } catch(e){}
     TESTS.filter(t => t.g === st.group).forEach(t => n = Math.max(n, t.n + 1));
-    const T = { g: st.group, n, title: "Homework: " + I.topic, r: HKEYS[I.base].map((_, j) => `h:${I.base}:${j}`), d: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" }), c: new Date().toISOString(), s: st.name };
+    const T = { g: st.group, n, title: "Homework: " + I.topic, r: HKEYS[I.base].map((_, j) => `h:${I.base}:${j}`), d: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" }), c: new Date().toISOString(), s: st.name, src: v };
     try { await db.doc(`tests/${T.g}-${T.n}`).set(T); addTest(T) } catch(e){ out.textContent = "Couldn't save. Check your connection."; return }
     const u = `${STUDENT_URL}?n=${encodeURIComponent(st.name)}&hw=${sg}.${si}&k=${n}#${st.group}`;
     const msg = `Hello, this is Mr Ali from OnMaths 😊\n\n${st.name}'s maths homework this week is on ${I.topic} (${I.hw.length} questions). It is done online, marked straight away, and the result comes to me automatically. There is a 2-minute video on the page to help.\n\n${u}\n\nPlease make sure it is completed before our next lesson.\n\nThank you,\nMr Ali`;
     out.innerHTML = `<p class="tiernote" style="margin:6px 0">✓ Set: <b>${esc(I.topic)}</b>. Send this link (it puts the homework on ${esc(st.name)}'s page):</p><code>${esc(u)}</code><div class="tb-btns" style="margin-top:6px"><button type="button" data-stlink="${esc(u)}">Copy link</button><button type="button" data-stlink="${esc(msg)}">Copy WhatsApp message</button><a class="btn" style="padding:6px 12px" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(msg)}">Open WhatsApp</a></div>`;
-    status.textContent = `Homework set for ${st.name}: ${I.topic}.` }
+    status.textContent = `Homework set for ${st.name}: ${I.topic}.`; if (root !== panel) setTimeout(() => { const keep = out.innerHTML; renderFolder(); const o2 = fEl.querySelector("#shwOut"); if (o2) o2.innerHTML = keep }, 50) }
   function paperFor(c, st){
     if (c.t === "A"){ const T = testOf(c.g, c.i + 1); if (!T) return null; const qs = T.r.map(resolveRef); return qs.every(Boolean) ? { title: `Test ${T.n}: ${T.title}`, week: T.d || "", student: "", questions: qs } : null }
     const L = OPAPERS.filter(P => P.group === c.g && papKind(P) === c.t && papNum(P) === c.i + 1 && Array.isArray(P.questions));
@@ -2269,7 +2299,7 @@ if (TEACHER){
   function renderPanel(){
     const st = students.find(x => x.id === sel); if (!st){ panel.innerHTML = ""; return }
     const S = stats(st), sc = scores[st.id] || {};
-    let h = `<h3 style="font-size:1.4rem;margin:4px 0 6px">${esc(st.name)} <span class="tiernote">· ${esc(gname(st.group))}</span></h3>
+    let h = `<h3 style="font-size:1.4rem;margin:4px 0 6px">${esc(st.name)} <span class="tiernote">· ${esc(gname(st.group))}</span> <button type="button" id="trkFolder" class="sf-mini">📁 Open ${esc(st.name)}'s folder</button></h3>
       <div class="tb-link sethw" style="margin:0 0 12px"><b>📝 Set ${esc(st.name)}'s homework this week</b><span class="tiernote" style="margin:0">Pick a topic. ${esc(st.name)} gets it online, marked straight away, with its video. Then send the link or message.</span>
         <select id="shwTopic">${hwTopicOptions(st.group)}</select><button type="button" id="shwGo">Set homework</button><div id="shwOut"></div></div>
       <div class="tb-link" style="margin:0 0 12px"><b>${esc(st.name)}'s own link</b><span class="tiernote" style="margin:0">Send this to ${esc(st.name)}. It opens their class and fills in their name, so their results come to you automatically.</span><code>${esc(studentLink(st))}</code><button type="button" data-stlink="${esc(studentLink(st))}">Copy ${esc(st.name)}'s link</button></div>
@@ -2296,6 +2326,75 @@ if (TEACHER){
     h += `<p style="margin-top:12px"><button type="button" class="trk-del" id="trkDel">${pendingDel === st.id ? "Tap again to remove " + esc(st.name) + " and their scores" : "Remove this student"}</button></p>`;
     panel.innerHTML = h;
   }
+
+  /* ===== Student folder: one page per student (opened from the timetable or tracker) ===== */
+  const fEl = document.createElement("div"); fEl.id = "stFolder"; fEl.className = "sf"; fEl.hidden = true; fEl.setAttribute("role", "dialog"); fEl.setAttribute("aria-modal", "true"); document.body.appendChild(fEl);
+  let fId = null, fSlots = [], fLog = [];
+  const FDAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], p2 = n => String(n).padStart(2, "0");
+  const isoD = d => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
+  const niceD = iso => new Date(iso + "T12:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+  const myTests = st => TESTS.filter(t => t.g === st.group && t.s && pnorm(t.s) === pnorm(st.name)).sort((a, b) => (b.c || "").localeCompare(a.c || "") || b.n - a.n);
+  const tScore = (st, T) => { const r = (paps[st.id] || {})["A" + T.n]; if (!Array.isArray(r)) return null; const qs = T.r.map(resolveRef); if (!qs.every(Boolean)) return null; const got = r.reduce((a, v) => a + (+v || 0), 0), max = qs.reduce((a, q) => a + q.marks, 0); return { got, max, pct: Math.round(100 * got / max) } };
+  const tLink = (st, T) => T.src ? `${STUDENT_URL}?n=${encodeURIComponent(st.name)}&hw=${T.src}&k=${T.n}#${T.g}` : studentLink(st);
+  const myPaper = st => { const L = OPAPERS.filter(P => P.group === st.group && Array.isArray(P.questions) && pnorm(P.student) === pnorm(st.name)); return L.filter(P => papKind(P) === "P").sort((a, b) => papNum(b) - papNum(a))[0] || L.find(P => papKind(P) === "B") || null };
+  const pScore = (st, P) => { const r = (paps[st.id] || {})[papKind(P) + papNum(P)]; if (!Array.isArray(r)) return null; const got = r.reduce((a, v) => a + (+v || 0), 0), max = P.questions.reduce((a, q) => a + q.marks, 0); return { got, max, pct: Math.round(100 * got / max) } };
+  function nextLesson(st){ const my = fSlots.filter(x => x.id === st.id); if (!my.length) return null; const now = new Date(), hm = `${p2(now.getHours())}:${p2(now.getMinutes())}`;
+    for (let k = 0; k < 8; k++){ const d = new Date(now); d.setDate(now.getDate() + k); const S = my.filter(x => x.day === d.getDay()).sort((a, b) => (a.time || "").localeCompare(b.time || "")).find(x => k > 0 || !x.time || x.time >= hm); if (S) return { d, time: S.time } } return null }
+  const shared = st => students.filter(x => x.group === st.group).length > 1;
+  const myLog = st => fLog.filter(e => e.s ? pnorm(e.s) === pnorm(st.name) : e.group === st.group).sort((a, b) => b.date.localeCompare(a.date));
+  function planList(g){ const n = isY11(g) ? DATES.length : isSch(g) ? planN(g) : 0;
+    if (WEEKPLAN[g]) return WEEKPLAN[g].slice(Math.max(0, SCUR)); if (n) return Array.from({ length: n }, (_, i) => i).slice(Math.max(0, curOf(g))); const i = curLessonIdx(g); return i >= 0 ? [i] : [] }
+  function topicChoices(g, pick){ const T = isY11(g) ? TOPICS[g] : HWX[g].topics; return T.map((t, i) => `<option value="${i}"${i === pick ? " selected" : ""}>${esc(t)}</option>`).join("") }
+  function renderFolder(){
+    const st = students.find(x => x.id === fId); if (!st){ fEl.hidden = true; return }
+    const col = { y4: "#00B8A9", y7s3: "#FF3D7F", y8s2: "#6C4DFF", y10s1: "#2BB5FF", y10s3: "#FF8A3D", y10s4: "#E0B000", y11s2: "#C2392F", y11s3: "#7A4FD0", y11s4: "#1E8A55", y11fm: "#3B1E8C" }[st.group] || "var(--ink)";
+    const my = fSlots.filter(x => x.id === st.id), when = my.length ? my.map(x => `${FDAY[x.day]}${x.time ? " " + x.time : ""}`).join(", ") : "Not on the timetable yet";
+    const TS = myTests(st), T = TS[0], ts = T ? tScore(st, T) : null, P = myPaper(st), ps = P ? pScore(st, P) : null;
+    const doneN = TS.filter(t => tScore(st, t)).length;
+    const HS = hwStats(st), PR = papStats(st), ES = stats(st);
+    const all = [...HS.rows.map(r => ({ k: "Homework", t: topicOf(st.group, r.i), ...r })), ...PR.map(r => ({ k: /^Test/.test(r.title) ? "Set homework" : /baseline/i.test(r.title) ? "Baseline" : "Exam paper", t: r.title.replace(/^Test \d+:\s*(Homework:\s*)?/, ""), ...r })), ...ES.rows.map(r => ({ k: "Exit ticket", t: topicOf(st.group, r.i), ...r }))];
+    const avg = a => a.length ? Math.round(a.reduce((x, r) => x + r.pct, 0) / a.length) : null, hwA = avg([...HS.rows, ...PR.filter(r => /^Test/.test(r.title))]), paA = avg(PR.filter(r => !/^Test/.test(r.title)));
+    const nl = nextLesson(st), log = myLog(st), cov = new Set(log.filter(e => e.week !== null && e.week !== undefined && (e.s || !shared(st))).map(e => +e.week)); Object.keys(hws[st.id] || {}).forEach(k => cov.add(+k));
+    const nxt = planList(st.group).find(i => !cov.has(i)); const nxI = nxt === undefined ? curLessonIdx(st.group) : nxt, nxInfo = nxI >= 0 ? hwInfo(st.group, nxI) : null;
+    const sl = nxInfo && nxInfo.slides ? (nxInfo.sbase || nxInfo.base) : null;
+    const remind = T && !ts ? `Hello, this is Mr Ali from OnMaths 😊\n\nJust a reminder that ${st.name}'s maths homework (${T.title.replace(/^Homework:\s*/, "")}) isn't done yet. It is online and marked straight away:\n\n${tLink(st, T)}\n\nPlease make sure it is completed before our next lesson${nl ? " on " + FDAY[nl.d.getDay()] : ""}.\n\nThank you,\nMr Ali` : "";
+    const chip = s => s ? `<span class="pct ${pctClass(s.pct)}">${s.got}/${s.max} · ${s.pct}%</span>` : `<span class="sf-no">⏳ Not done yet</span>`;
+    fEl.innerHTML = `<div class="sf-in" style="--sc:${col}">
+      <div class="sf-top"><div><div class="sf-eye">📁 Student folder</div><h2>${esc(st.name)}</h2><div class="sf-sub">${esc(gname(st.group))} · 🗓 ${esc(when)}</div></div><button type="button" class="sf-x" data-fclose aria-label="Close">✕</button></div>
+      <div class="sf-tiles"><div><b>${doneN}/${TS.length}</b><span>Set homework done</span></div><div><b>${hwA === null ? "–" : hwA + "%"}</b><span>Homework average</span></div><div><b>${paA === null ? "–" : paA + "%"}</b><span>Papers average</span></div><div><b>${log.length}</b><span>Lessons logged</span></div></div>
+      <div class="sf-card"><h3>This week</h3>
+        <div class="sf-row"><span class="sf-l">📝 Homework</span><span class="sf-t">${T ? esc(T.title.replace(/^Homework:\s*/, "")) + ` <small>set ${esc(T.d || "")}</small>` : "None set yet"}</span>${T ? chip(ts) : ""}</div>
+        <div class="sf-row"><span class="sf-l">📄 ${P && papKind(P) === "B" ? "Baseline" : "Exam paper"}</span><span class="sf-t">${P ? esc(P.title) + (P.week ? ` <small>${esc(P.week)}</small>` : "") : "None yet"}</span>${P ? chip(ps) : ""}</div>
+        <div class="sf-btns">${remind ? `<a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(remind)}">💬 Remind parent (WhatsApp)</a><button type="button" data-stlink="${esc(remind)}">Copy reminder</button>` : ""}<button type="button" data-stlink="${esc(T ? tLink(st, T) : studentLink(st))}">🔗 Copy ${esc(st.name)}'s link</button><button type="button" data-fimport>🔄 Check for new results</button></div></div>
+      <div class="sf-card"><h3>Next lesson</h3>
+        <div class="sf-row"><span class="sf-l">🗓 When</span><span class="sf-t">${nl ? `${nl.d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" })}${nl.time ? " · " + esc(nl.time) : ""}` : "Add " + esc(st.name) + " to the timetable"}</span></div>
+        <label class="sf-l" for="sfTopic">📘 Topic</label><select id="sfTopic">${topicChoices(st.group, nxI)}</select>
+        <div class="sf-btns" id="sfRes">${sl ? `<button type="button" class="view" data-pdf="decks/${sl}.pdf" data-title="Slides · ${esc(nxInfo.topic)}">👁 Slides</button><button type="button" data-file="decks/${sl}.pptx">⬇ PowerPoint</button>` : ""}</div>
+        <label class="sf-l" for="sfNote">After the lesson: notes (optional)</label><input id="sfNote" type="text" maxlength="200" placeholder="e.g. Good on area, needs practice with radius vs diameter">
+        <div class="sf-btns"><button type="button" data-flog class="sf-go">✓ Mark this topic as covered today</button></div><p class="tiernote" id="sfMsg" style="margin:4px 0 0"></p></div>
+      <div class="sf-card sethw"><h3>Set homework</h3><span class="tiernote" style="margin:0">Pick a topic. ${esc(st.name)} does it online and it's marked straight away, with its video.</span>
+        <select id="shwTopic">${hwTopicOptions(st.group)}</select><button type="button" id="shwGo" class="sf-go">Set homework</button><div id="shwOut"></div></div>
+      <div class="sf-card"><h3>Progress</h3>${all.length ? `<div class="sf-prog">${all.map(r => `<div class="sf-pr"><span class="sf-k">${esc(r.k)}</span><span class="sf-pt">${esc(r.t)}</span><span class="sf-bar"><i class="${pctClass(r.pct)}" style="width:${Math.max(4, r.pct)}%"></i></span><b>${r.pct}%</b></div>`).join("")}</div>` : `<p class="tiernote">No results yet. They appear here when ${esc(st.name)} does homework or a paper online.</p>`}
+        ${TS.length > 1 ? `<h4>Homework set</h4>${TS.map(t => `<div class="sf-row"><span class="sf-t">${esc(t.title.replace(/^Homework:\s*/, ""))} <small>${esc(t.d || "")}</small></span>${chip(tScore(st, t))}</div>`).join("")}` : ""}</div>
+      <div class="sf-card"><h3>What we've covered</h3>${log.length ? log.map(e => `<div class="sf-log"><b>${esc(niceD(e.date))}</b><span>${esc(e.topic)}${!e.s && shared(st) ? ` <small>(${esc(gname(e.group))} log)</small>` : ""}${e.notes ? `<em>${esc(e.notes)}</em>` : ""}</span></div>`).join("") : `<p class="tiernote">Nothing logged yet. Use “Mark this topic as covered” after each lesson.</p>`}</div>
+      <p class="sf-btns"><button type="button" data-ftrk>Enter marks or make a parent report</button><button type="button" data-fclose>Close folder</button></p></div>`;
+  }
+  async function loadFolderData(){ if (!db) return; try { const [a, b] = await Promise.all([db.doc("tracker/timetable").get(), db.collection("taught").get()]); fSlots = a.exists ? JSON.parse(JSON.stringify(a.data().slots || [])) : []; fLog = b.docs.map(d => ({ id: d.id, ...JSON.parse(JSON.stringify(d.data())) })) } catch(e){} }
+  async function openFolder(id){ if (!students.find(x => x.id === id)) return; fId = id; fEl.hidden = false; document.body.classList.add("sf-open"); fEl.innerHTML = `<div class="sf-in"><p class="tiernote">Opening folder…</p></div>`; await loadFolderData(); renderFolder(); fEl.scrollTop = 0 }
+  const closeFolder = () => { fEl.hidden = true; fId = null; document.body.classList.remove("sf-open") };
+  window.openFolder = openFolder;
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !fEl.hidden) closeFolder() });
+  fEl.addEventListener("click", async e => { const st = students.find(x => x.id === fId); if (!st) return;
+    if (e.target === fEl || e.target.closest("[data-fclose]")){ closeFolder(); return }
+    if (e.target.closest("#shwGo")){ setHomework(st, fEl); return }
+    if (e.target.closest("[data-ftrk]")){ closeFolder(); sel = st.id; renderPills(); renderPanel(); document.getElementById("tracker").scrollIntoView({ behavior: "smooth" }); return }
+    if (e.target.closest("[data-fimport]")){ toast("Checking for new results…"); try { await importResults(false) } catch(err){} renderFolder(); return }
+    if (e.target.closest("[data-flog]")){ const i = +fEl.querySelector("#sfTopic").value, msg = fEl.querySelector("#sfMsg");
+      const doc = { date: isoD(new Date()), group: st.group, week: i, topic: topicOf(st.group, i), objectives: [], notes: fEl.querySelector("#sfNote").value.trim(), s: st.name, created: new Date().toISOString() };
+      try { await db.collection("taught").add(doc); await loadFolderData(); renderFolder(); fEl.querySelector("#sfMsg").textContent = `✓ Logged: ${doc.topic}.` } catch(err){ msg.textContent = "Couldn't save. Check your connection." } return }
+    { const lb = e.target.closest("[data-stlink]"); if (lb){ try { navigator.clipboard.writeText(lb.dataset.stlink).then(() => toast("Copied."), () => toast("Press and hold to copy.")) } catch(err){ toast("Press and hold to copy.") } } } });
+  fEl.addEventListener("change", e => { if (e.target.id !== "sfTopic") return; const st = students.find(x => x.id === fId), I = hwInfo(st.group, +e.target.value), sl = I.slides ? (I.sbase || I.base) : null;
+    fEl.querySelector("#sfRes").innerHTML = sl ? `<button type="button" class="view" data-pdf="decks/${sl}.pdf" data-title="Slides · ${esc(I.topic)}">👁 Slides</button><button type="button" data-file="decks/${sl}.pptx">⬇ PowerPoint</button>` : "" });
   const saveTimers = {};
   async function saveScores(id){
     try { await db.doc("scores/" + id).set({ weeks: scores[id] || {}, hw: hws[id] || {}, pap: paps[id] || {} }); status.textContent = "Saved." }
@@ -2327,7 +2426,8 @@ if (TEACHER){
       try { await navigator.clipboard.writeText(txt); toast(pb.id === "prMsg" ? "Message copied. Paste it into WhatsApp, text or email." : "Link copied. Paste it into a message to the parent.") }
       catch(err){ out.innerHTML = `Press and hold to copy:<br><code class="pr-code">${esc(txt)}</code>`; selectEl(out.querySelector("code")) }
       return }
-    if (e.target.closest("#shwGo")){ const st = students.find(x => x.id === sel); if (st) setHomework(st); return }
+    if (e.target.closest("#shwGo")){ const st = students.find(x => x.id === sel); if (st) setHomework(st, panel); return }
+    if (e.target.closest("#trkFolder")){ openFolder(sel); return }
     { const lb = e.target.closest("[data-stlink]"); if (lb){ try { navigator.clipboard.writeText(lb.dataset.stlink).then(() => toast("Link copied. Send it to the student."), () => toast("Press and hold the link to copy it.")) } catch(err){ toast("Press and hold the link to copy it.") } return } }
     if (e.target.closest("#trkCodeBtn")){
       const st = students.find(x => x.id === sel), c = readCode(document.getElementById("trkCode").value);
@@ -2419,7 +2519,7 @@ if (TEACHER){
     document.getElementById("ttTodayH").textContent = td === today ? `Today · ${DAYS[td]}` : `Next lessons · ${DAYS[td]}`;
     const T = daySlots(td);
     document.getElementById("ttToday").innerHTML = T.length ? T.map(x => { const g = groupOf(x.id);
-      return `<div class="tt-les" style="border-color:${GCOL[g] || "var(--line)"}"><span class="tm">${esc(x.time || "Time not set")}</span><span class="nm">${esc(nameOf(x.id))}</span><span class="gp">${g ? esc(gname(g)) : ""}</span><span class="tp">${esc(topicLine(x.id))}</span><div class="bt"><button type="button" data-open="${esc(x.id)}">Tracker</button><button type="button" data-link="${esc(x.id)}">Copy link</button></div></div>` }).join("") : `<div class="tt-les free">No lessons this week</div>`;
+      return `<div class="tt-les" style="border-color:${GCOL[g] || "var(--line)"}"><span class="tm">${esc(x.time || "Time not set")}</span><span class="nm">${esc(nameOf(x.id))}</span><span class="gp">${g ? esc(gname(g)) : ""}</span><span class="tp">${esc(topicLine(x.id))}</span><div class="bt"><button type="button" data-open="${esc(x.id)}">📁 Folder</button><button type="button" data-link="${esc(x.id)}">Copy link</button></div></div>` }).join("") : `<div class="tt-les free">No lessons this week</div>`;
     const rows = Math.max(1, ...ORDER.map(d => daySlots(d).length));
     let h = `<thead><tr><th></th>${ORDER.map(d => `<th${d === today ? ' class="now"' : ""}>${DAYS[d].slice(0, 3)}</th>`).join("")}</tr></thead><tbody>`;
     for (let r = 0; r < rows; r++){ h += `<tr><th>${r + 1}</th>` + ORDER.map(d => { const x = daySlots(d)[r], cls = d === today ? ' class="now"' : ""; if (!x) return `<td${cls}></td>`; const g = groupOf(x.id);
@@ -2428,12 +2528,12 @@ if (TEACHER){
   }
   const board = document.getElementById("timetable");
   board.addEventListener("click", e => { const l = e.target.closest("[data-link]"); if (l){ const x = list.find(y => y.id === l.dataset.link); if (!x) return; const u = `${STUDENT_URL}?n=${encodeURIComponent(x.name)}#${x.group}`; try { navigator.clipboard.writeText(u).then(() => toast("Link copied: " + x.name), () => toast(u)) } catch(err){ toast(u) } return }
-    const o = e.target.closest(".tt-les [data-open], .tt-cell[data-open]"); if (o){ const pill = document.querySelector(`#trkStudents [data-st="${o.dataset.open}"]`); document.getElementById("tracker").scrollIntoView({ behavior: "smooth" }); if (pill) pill.click() } });
+    const o = e.target.closest(".tt-les [data-open], .tt-cell[data-open]"); if (o){ if (window.openFolder){ window.openFolder(o.dataset.open); return } const pill = document.querySelector(`#trkStudents [data-st="${o.dataset.open}"]`); document.getElementById("tracker").scrollIntoView({ behavior: "smooth" }); if (pill) pill.click() } });
   const save = () => { clearTimeout(timer); st.textContent = "Saving…"; timer = setTimeout(async () => { try { await tdb.doc("tracker/timetable").set({ slots }); st.textContent = "Saved." } catch(e){ st.textContent = "Couldn't save. Check your connection." } }, 500) };
   grid.addEventListener("change", e => { const i = e.target.closest("[data-tk]"); if (!i) return; slots[+i.dataset.tk].time = i.value; save(); render() });
   grid.addEventListener("click", e => {
     const d = e.target.closest("[data-del]"); if (d){ if (!d.dataset.sure){ d.dataset.sure = "1"; d.textContent = "Remove?"; return } slots.splice(+d.dataset.del, 1); save(); render(); return }
-    const o = e.target.closest("[data-open]"); if (o){ const pill = document.querySelector(`#trkStudents [data-st="${o.dataset.open}"]`); document.getElementById("tracker").scrollIntoView({ behavior: "smooth" }); if (pill) pill.click() } });
+    const o = e.target.closest("[data-open]"); if (o){ if (window.openFolder){ window.openFolder(o.dataset.open); return } const pill = document.querySelector(`#trkStudents [data-st="${o.dataset.open}"]`); document.getElementById("tracker").scrollIntoView({ behavior: "smooth" }); if (pill) pill.click() } });
   document.getElementById("ttAdd").addEventListener("click", () => { if (!tdb){ st.textContent = "Open the teacher site in Claude while signed in to save."; return } slots.push({ day: +daySel.value, id: who.value, time: document.getElementById("ttTime").value || "" }); save(); render() });
   (async () => { tdb = window.claude && window.claude.use ? await window.claude.use("db").catch(() => null) : null;
     if (!tdb){ st.textContent = "The timetable shows when you open the teacher site in Claude while signed in."; return }
