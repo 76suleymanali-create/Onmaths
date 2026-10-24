@@ -132,6 +132,20 @@ header nav a:hover{background:color-mix(in srgb,var(--band-ink) 15%,transparent)
 .et-top b{font:800 1.1rem var(--display)}
 .et-top label{font-weight:700}
 .hwon{margin:12px 0 4px}
+
+.tt-today{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:8px}
+.tt-les{background:var(--card,#fff);border:2px solid var(--line);border-radius:14px;padding:12px;display:grid;gap:4px;min-width:0}
+.tt-les .tm{font:700 .8rem var(--mono);opacity:.75}.tt-les .nm{font-weight:800;font-size:1.05rem}.tt-les .gp{font-size:.85rem;opacity:.8}.tt-les .tp{font-weight:700}
+.tt-les .bt{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}.tt-les .bt button{font:700 .8rem var(--body);border:2px solid var(--ink);border-radius:999px;padding:5px 10px;background:var(--hi);color:var(--hi-ink);cursor:pointer}
+.tt-les.free{border-style:dashed;opacity:.7}
+.tt-scroll{overflow-x:auto;border:2px solid var(--line);border-radius:14px;background:var(--card,#fff)}
+.tt-tab{border-collapse:collapse;width:100%;min-width:700px}
+.tt-tab th,.tt-tab td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:6px;vertical-align:top;text-align:left}
+.tt-tab th{font:700 .75rem var(--body);text-transform:uppercase;letter-spacing:.06em;opacity:.8}
+.tt-tab td.now,.tt-tab th.now{background:color-mix(in srgb,var(--hi,#ffc93c) 28%,transparent)}
+.tt-cell{display:block;width:100%;text-align:left;border:1px solid transparent;border-radius:8px;padding:6px 8px;cursor:pointer;color:var(--ink);font:inherit;line-height:1.25}
+.tt-cell:hover{border-color:var(--ink)}.tt-cell b{display:block;font-size:.95rem}.tt-cell i{display:block;font:700 .72rem var(--mono);font-style:normal;opacity:.75}.tt-cell span{display:block;font-size:.75rem;opacity:.85}
+.tt-edit{margin-top:12px}.tt-edit summary{cursor:pointer;padding:6px 0}
 .tt-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
 .tt-day{border:2px solid var(--line);border-radius:14px;background:var(--card);padding:10px 12px}
 .tt-day.today{border-color:var(--red,#ff3d7f);box-shadow:4px 4px 0 var(--ink)}
@@ -674,7 +688,11 @@ footer b{color:var(--ink);font-family:var(--display)}
         <h2>Timetable</h2>
         <p>Who you teach each day, with this week's topic. Type a time to save it. Tap a name to open them in the tracker.</p>
       </div>
-      <div id="ttGrid" class="tt-grid"></div>
+      <h3 class="hw-h" id="ttTodayH">Today</h3>
+      <div id="ttToday" class="tt-today"></div>
+      <h3 class="hw-h">This week</h3>
+      <div class="tt-scroll"><table class="tt-tab" id="ttTable"></table></div>
+      <details class="tt-edit"><summary><b>Edit times and lessons</b></summary><div id="ttGrid" class="tt-grid"></div></details>
       <div class="tt-add"><label for="ttWho"><b>Add a lesson</b></label><select id="ttWho"></select><select id="ttDay"></select><input id="ttTime" type="time"><button type="button" id="ttAdd" class="et-go">Add</button></div>
       <p class="tiernote" id="ttStatus"></p>
     </div>
@@ -2369,8 +2387,28 @@ if (TEACHER){
     grid.innerHTML = ORDER.map(d => { const S = slots.map((x, k) => ({ ...x, k })).filter(x => x.day === d).sort((a, b) => (a.time || "99").localeCompare(b.time || "99"));
       return `<div class="tt-day${d === today ? " today" : ""}"><h3>${DAYS[d]}${d === today ? " <small>today</small>" : ""}</h3>` + (S.length ? S.map(x => { const g = groupOf(x.id);
         return `<div class="tt-slot"><input type="time" value="${esc(x.time || "")}" data-tk="${x.k}" aria-label="Time"><button type="button" class="who" data-open="${esc(x.id)}">${esc(nameOf(x.id))}</button><button type="button" class="x" data-del="${x.k}" aria-label="Remove">✕</button><span class="tp">${g ? esc(gname(g)) : ""}${setFor(x.id) ? " · set: " + esc(setFor(x.id).title.replace(/^Homework:\s*/, "")) : g && weekTopic(g) ? " · this week: " + esc(weekTopic(g)) : ""}</span></div>` }).join("") : `<div class="tt-none">No lessons</div>`) + `</div>` }).join("");
+    renderBoard();
     who.innerHTML = list.map(x => `<option value="${esc(x.id)}">${esc(x.name)} · ${esc(gname(x.group))}</option>`).join("");
   }
+  const GCOL = { y4: "#00B8A9", y7s3: "#FF3D7F", y8s2: "#6C4DFF", y10s1: "#2BB5FF", y10s3: "#FF8A3D", y10s4: "#E0B000", y11s2: "#C2392F", y11s3: "#7A4FD0", y11s4: "#1E8A55", y11fm: "#3B1E8C" };
+  const tint = g => `color-mix(in srgb, ${GCOL[g] || "#888"} 16%, var(--card,#fff))`;
+  const topicLine = id => { const t = setFor(id); if (t) return "Set: " + t.title.replace(/^Homework:\s*/, ""); const g = groupOf(id); return g ? weekTopic(g) : "" };
+  const daySlots = d => slots.filter(x => x.day === d).sort((a, b) => (a.time || "99").localeCompare(b.time || "99"));
+  function renderBoard(){
+    const today = new Date().getDay(); let td = today, k = 0; while (!daySlots(td).length && k < 7){ td = (td + 1) % 7; k++ }
+    document.getElementById("ttTodayH").textContent = td === today ? `Today · ${DAYS[td]}` : `Next lessons · ${DAYS[td]}`;
+    const T = daySlots(td);
+    document.getElementById("ttToday").innerHTML = T.length ? T.map(x => { const g = groupOf(x.id);
+      return `<div class="tt-les" style="border-color:${GCOL[g] || "var(--line)"}"><span class="tm">${esc(x.time || "Time not set")}</span><span class="nm">${esc(nameOf(x.id))}</span><span class="gp">${g ? esc(gname(g)) : ""}</span><span class="tp">${esc(topicLine(x.id))}</span><div class="bt"><button type="button" data-open="${esc(x.id)}">Tracker</button><button type="button" data-link="${esc(x.id)}">Copy link</button></div></div>` }).join("") : `<div class="tt-les free">No lessons this week</div>`;
+    const rows = Math.max(1, ...ORDER.map(d => daySlots(d).length));
+    let h = `<thead><tr><th></th>${ORDER.map(d => `<th${d === today ? ' class="now"' : ""}>${DAYS[d].slice(0, 3)}</th>`).join("")}</tr></thead><tbody>`;
+    for (let r = 0; r < rows; r++){ h += `<tr><th>${r + 1}</th>` + ORDER.map(d => { const x = daySlots(d)[r], cls = d === today ? ' class="now"' : ""; if (!x) return `<td${cls}></td>`; const g = groupOf(x.id);
+      return `<td${cls}><button type="button" class="tt-cell" data-open="${esc(x.id)}" style="background:${tint(g)}"><i>${esc(x.time || "–")}</i><b style="color:${GCOL[g] || "inherit"}">${esc(nameOf(x.id))}</b><span>${g ? esc(gname(g)) : ""}</span><span>${esc(topicLine(x.id))}</span></button></td>` }).join("") + `</tr>` }
+    document.getElementById("ttTable").innerHTML = h + "</tbody>";
+  }
+  const board = document.getElementById("timetable");
+  board.addEventListener("click", e => { const l = e.target.closest("[data-link]"); if (l){ const x = list.find(y => y.id === l.dataset.link); if (!x) return; const u = `${STUDENT_URL}?n=${encodeURIComponent(x.name)}#${x.group}`; try { navigator.clipboard.writeText(u).then(() => toast("Link copied: " + x.name), () => toast(u)) } catch(err){ toast(u) } return }
+    const o = e.target.closest(".tt-les [data-open], .tt-cell[data-open]"); if (o){ const pill = document.querySelector(`#trkStudents [data-st="${o.dataset.open}"]`); document.getElementById("tracker").scrollIntoView({ behavior: "smooth" }); if (pill) pill.click() } });
   const save = () => { clearTimeout(timer); st.textContent = "Saving…"; timer = setTimeout(async () => { try { await tdb.doc("tracker/timetable").set({ slots }); st.textContent = "Saved." } catch(e){ st.textContent = "Couldn't save. Check your connection." } }, 500) };
   grid.addEventListener("change", e => { const i = e.target.closest("[data-tk]"); if (!i) return; slots[+i.dataset.tk].time = i.value; save(); render() });
   grid.addEventListener("click", e => {
