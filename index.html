@@ -132,6 +132,20 @@ header nav a:hover{background:color-mix(in srgb,var(--band-ink) 15%,transparent)
 .et-top b{font:800 1.1rem var(--display)}
 .et-top label{font-weight:700}
 .hwon{margin:12px 0 4px}
+.tt-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.tt-day{border:2px solid var(--line);border-radius:14px;background:var(--card);padding:10px 12px}
+.tt-day.today{border-color:var(--red,#ff3d7f);box-shadow:4px 4px 0 var(--ink)}
+.tt-day h3{margin:0 0 6px;font-size:1rem;display:flex;justify-content:space-between}
+.tt-day h3 small{font-weight:600;opacity:.7}
+.tt-slot{display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:6px 0;border-top:1px dashed var(--line)}
+.tt-slot input{font:600 .9rem var(--body);width:92px;padding:4px;border:2px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+.tt-slot .who{font-weight:700;cursor:pointer;background:none;border:0;color:var(--ink);text-align:left;padding:0;font-size:1rem}
+.tt-slot .tp{grid-column:2/4;font-size:.8rem;opacity:.75}
+.tt-slot .x{background:none;border:0;cursor:pointer;font-size:1rem;color:var(--ink);opacity:.6}
+.tt-none{opacity:.6;font-size:.9rem}
+.tt-add{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.tt-add select,.tt-add input{font:600 .95rem var(--body);padding:8px;border:2px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+
 .tb-form{display:grid;gap:8px;max-width:640px}
 .tb-form select,.tb-form input{font:600 1rem var(--body);padding:10px;border:2px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
 .tb-topics{display:grid;gap:6px;margin:6px 0;padding:10px;border:2px solid var(--line);border-radius:12px;background:var(--card)}
@@ -650,6 +664,19 @@ footer b{color:var(--ink);font-family:var(--display)}
       <div class="pills" id="tlFilter" role="group" aria-label="Show lessons for"></div>
       <div id="tlCover"></div>
       <div id="tlList" class="tl-list"></div>
+    </div>
+  </section>
+
+  <section id="timetable" style="padding-top:0" hidden>
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Teacher only · your tutoring week</div>
+        <h2>Timetable</h2>
+        <p>Who you teach each day, with this week's topic. Type a time to save it. Tap a name to open them in the tracker.</p>
+      </div>
+      <div id="ttGrid" class="tt-grid"></div>
+      <div class="tt-add"><label for="ttWho"><b>Add a lesson</b></label><select id="ttWho"></select><select id="ttDay"></select><input id="ttTime" type="time"><button type="button" id="ttAdd" class="et-go">Add</button></div>
+      <p class="tiernote" id="ttStatus"></p>
     </div>
   </section>
 
@@ -2325,6 +2352,35 @@ if (TEACHER){
     } catch(e){ status.textContent = "Couldn't load saved scores. Reload the page to try again."; return }
     try { const pm = await window.claude.use("permissions"); const st = pm ? await Promise.resolve(pm.state("mcp:Google Sheets")).catch(() => "unavailable") : "unavailable"; if (st === "granted") importResults(true) } catch(e){}
   })();
+}
+/* ===== Tutoring timetable (teacher only; saved in the site database) ===== */
+if (TEACHER){
+  document.getElementById("timetable").hidden = false;
+  { const nav = document.querySelector("nav"); if (nav && !nav.querySelector('a[href="#timetable"]')){ const a = document.createElement("a"); a.href = "#timetable"; a.textContent = "Timetable"; nav.insertBefore(a, nav.firstChild) } }
+  const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], ORDER = [1, 2, 3, 4, 5, 6, 0];
+  const grid = document.getElementById("ttGrid"), st = document.getElementById("ttStatus"), who = document.getElementById("ttWho"), daySel = document.getElementById("ttDay");
+  let tdb = null, list = [], slots = [], timer = null;
+  daySel.innerHTML = ORDER.map(d => `<option value="${d}">${DAYS[d]}</option>`).join("");
+  const nameOf = id => (list.find(x => x.id === id) || {}).name || "?", groupOf = id => (list.find(x => x.id === id) || {}).group;
+  const setFor = id => { const x = list.find(y => y.id === id); if (!x) return null; return TESTS.filter(t => t.g === x.group && t.s && pnorm(t.s) === pnorm(x.name) && (!t.c || Date.now() - Date.parse(t.c) < 10 * 864e5)).sort((a, b) => b.n - a.n)[0] || null };
+  const weekTopic = g => { try { const i = curLessonIdx(g); return i >= 0 ? hwInfo(g, i).topic : "" } catch(e){ return "" } };
+  function render(){
+    const today = new Date().getDay();
+    grid.innerHTML = ORDER.map(d => { const S = slots.map((x, k) => ({ ...x, k })).filter(x => x.day === d).sort((a, b) => (a.time || "99").localeCompare(b.time || "99"));
+      return `<div class="tt-day${d === today ? " today" : ""}"><h3>${DAYS[d]}${d === today ? " <small>today</small>" : ""}</h3>` + (S.length ? S.map(x => { const g = groupOf(x.id);
+        return `<div class="tt-slot"><input type="time" value="${esc(x.time || "")}" data-tk="${x.k}" aria-label="Time"><button type="button" class="who" data-open="${esc(x.id)}">${esc(nameOf(x.id))}</button><button type="button" class="x" data-del="${x.k}" aria-label="Remove">✕</button><span class="tp">${g ? esc(gname(g)) : ""}${setFor(x.id) ? " · set: " + esc(setFor(x.id).title.replace(/^Homework:\s*/, "")) : g && weekTopic(g) ? " · this week: " + esc(weekTopic(g)) : ""}</span></div>` }).join("") : `<div class="tt-none">No lessons</div>`) + `</div>` }).join("");
+    who.innerHTML = list.map(x => `<option value="${esc(x.id)}">${esc(x.name)} · ${esc(gname(x.group))}</option>`).join("");
+  }
+  const save = () => { clearTimeout(timer); st.textContent = "Saving…"; timer = setTimeout(async () => { try { await tdb.doc("tracker/timetable").set({ slots }); st.textContent = "Saved." } catch(e){ st.textContent = "Couldn't save. Check your connection." } }, 500) };
+  grid.addEventListener("change", e => { const i = e.target.closest("[data-tk]"); if (!i) return; slots[+i.dataset.tk].time = i.value; save(); render() });
+  grid.addEventListener("click", e => {
+    const d = e.target.closest("[data-del]"); if (d){ if (!d.dataset.sure){ d.dataset.sure = "1"; d.textContent = "Remove?"; return } slots.splice(+d.dataset.del, 1); save(); render(); return }
+    const o = e.target.closest("[data-open]"); if (o){ const pill = document.querySelector(`#trkStudents [data-st="${o.dataset.open}"]`); document.getElementById("tracker").scrollIntoView({ behavior: "smooth" }); if (pill) pill.click() } });
+  document.getElementById("ttAdd").addEventListener("click", () => { if (!tdb){ st.textContent = "Open the teacher site in Claude while signed in to save."; return } slots.push({ day: +daySel.value, id: who.value, time: document.getElementById("ttTime").value || "" }); save(); render() });
+  (async () => { tdb = window.claude && window.claude.use ? await window.claude.use("db").catch(() => null) : null;
+    if (!tdb){ st.textContent = "The timetable shows when you open the teacher site in Claude while signed in."; return }
+    try { const [a, b] = await Promise.all([tdb.doc("tracker/students").get(), tdb.doc("tracker/timetable").get()]); list = a.exists ? JSON.parse(JSON.stringify(a.data().list || [])) : []; slots = b.exists ? JSON.parse(JSON.stringify(b.data().slots || [])) : []; render(); setTimeout(render, 2500) }
+    catch(e){ st.textContent = "Couldn't load the timetable. Reload to try again." } })();
 }
 /* ===== Make a test (teacher only): pick topics → online assessment link ===== */
 if (TEACHER){
