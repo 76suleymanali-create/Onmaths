@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<title>Alara's Maths Daily 10 · OnMaths</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+<style>
+/* Layout: single column "training card" — header strip, today's session card, then teacher log */
+:root{
+  --bg:#f3f6f4; --surface:#ffffff; --ink:#14231d; --muted:#5b6c64; --line:#d6e0db;
+  --pitch:#1d6b4c; --pitch-soft:#e2f0e9; --lane:#2f5bd3; --good:#1f8a52; --warn:#c9541d;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Nunito Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1714; --surface:#17221d; --ink:#e7f0eb; --muted:#9db0a7; --line:#2a3a33;
+  --pitch:#5cc796; --pitch-soft:#1c3329; --lane:#86a5ff; --good:#5cc796; --warn:#f08a5a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1714; --surface:#17221d; --ink:#e7f0eb; --muted:#9db0a7; --line:#2a3a33;
+  --pitch:#5cc796; --pitch-soft:#1c3329; --lane:#86a5ff; --good:#5cc796; --warn:#f08a5a; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+.wrap{max-width:640px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+h1{font-family:var(--display);font-size:40px;line-height:1;margin:4px 0 0;text-wrap:balance}
+h2{font-family:var(--display);font-size:26px;margin:0;line-height:1.1}
+.streak{font-family:var(--display);font-size:22px;color:var(--pitch);text-align:right}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.topic{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chip{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 10px;border-radius:99px;background:var(--pitch-soft);color:var(--pitch)}
+.chip.rev{color:var(--lane);background:transparent;border:1px solid var(--lane)}
+.lanes{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.lanes span{height:8px;border-radius:2px;background:var(--line)}
+.lanes span.ok{background:var(--good)} .lanes span.no{background:var(--warn)} .lanes span.now{background:var(--lane)}
+.flash{min-height:180px;border:2px dashed var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;justify-content:center;gap:12px}
+.q{font-size:20px;font-weight:700;line-height:1.35}
+.a{font-size:17px;color:var(--pitch);font-weight:600;border-top:1px solid var(--line);padding-top:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+button{font:inherit;font-weight:700;border-radius:10px;padding:12px 18px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;flex:1 1 auto}
+button:focus-visible{outline:3px solid var(--lane);outline-offset:2px}
+button[aria-selected="true"]{background:var(--pitch-soft);border-color:var(--pitch);color:var(--pitch)}
+button.primary{background:var(--pitch);border-color:var(--pitch);color:var(--surface)}
+button.good{border-color:var(--good);color:var(--good)} button.bad{border-color:var(--warn);color:var(--warn)}
+.timer{font-family:var(--display);font-size:28px;font-variant-numeric:tabular-nums}
+.meta{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:14px}
+.big{font-family:var(--display);font-size:56px;line-height:1;color:var(--pitch)}
+ul.missed{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.note{font-size:14px;color:var(--muted)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+textarea{width:100%;box-sizing:border-box;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--bg);color:var(--ink)}
+@media (prefers-reduced-motion:no-preference){.flash{transition:border-color .2s}}
+</style>
+
+</head><body><div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">OnMaths · GCSE Maths · Year 10 Set 4</div>
+      <h1>Alara's Maths Daily 10</h1>
+    </div>
+    <div class="streak" id="streak"></div>
+  </header>
+
+  <section class="card" id="intro">
+    <div class="topic"><span class="eyebrow" id="today"></span></div>
+    <div class="row" role="tablist" hidden><button id="subMaths" role="tab">Maths</button><button id="subPE" role="tab">PE</button></div>
+    <h2 id="topicName"></h2>
+    <p style="margin:0" id="howTo"></p>
+    <div class="row"><button class="primary" id="startBtn">Start today's 10</button></div>
+    <p class="note" id="doneNote" hidden></p>
+  </section>
+
+  <section class="card" id="examIntro">
+    <div class="eyebrow">Maths exam countdown · step 2 after the Daily 10</div>
+    <h2 id="exTitle"></h2>
+    <p style="margin:0">Exam-style questions with marks, about 15 minutes. Write full working on paper with a calculator, then reveal the worked answer and give yourself the marks you earned.</p>
+    <label class="note" for="exDay">Choose a day (catch up any you missed)</label>
+    <select id="exDay" style="font:inherit;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)"></select>
+    <div style="display:flex;flex-direction:column;gap:6px"><div class="eyebrow">Step 1 · Watch first</div><div id="exVideos" style="display:flex;flex-direction:column;gap:6px"></div></div>
+    <div class="eyebrow">Step 2 · Then do the questions</div>
+    <div class="row"><button class="primary" id="exStart">Start exam questions</button></div>
+  </section>
+
+  <section class="card" id="exam" hidden>
+    <div class="meta"><span id="exCount"></span><span class="chip" id="exMarks"></span></div>
+    <div class="flash">
+      <div class="q" id="exQ" style="font-size:18px;white-space:pre-line"></div>
+      <div class="a" id="exA" hidden style="white-space:pre-line"></div>
+    </div>
+    <div class="row" id="exFlipRow"><button class="primary" id="exFlip">Show worked answer</button></div>
+    <div id="exMarkRow" hidden><div class="note" style="margin-bottom:6px">How many marks did you get?</div><div class="row" id="exBtns"></div></div>
+  </section>
+
+  <section class="card" id="quiz" hidden>
+    <div class="meta"><span id="count"></span><span class="timer" id="timer">10:00</span></div>
+    <div class="lanes" id="lanes"></div>
+    <div class="flash" id="flash">
+      <div class="topic" id="cardTag"></div>
+      <div class="q" id="q"></div>
+      <div class="a" id="a" hidden></div>
+    </div>
+    <div class="row" id="flipRow"><button class="primary" id="flipBtn">Show answer</button></div>
+    <div class="row" id="markRow" hidden><button class="good" id="gotBtn">Got it</button><button class="bad" id="notBtn">Not yet</button></div>
+  </section>
+
+  <section class="card" id="result" hidden>
+    <div class="eyebrow">Session complete</div>
+    <div class="big" id="score"></div>
+    <p style="margin:0" id="resultMsg"></p>
+    <div id="missedWrap" hidden><div class="eyebrow" style="margin-bottom:6px">Add these to Box 1 of your flashcards</div><ul class="missed" id="missed"></ul></div>
+    <p class="note" id="saveNote"></p>
+    <div id="copyWrap" hidden>
+      <textarea id="summary" rows="3" readonly></textarea>
+      <div class="row" style="margin-top:8px"><button id="copyBtn">Copy result to send to Mr Ali</button></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const BANK = {
+ "Skeletal system":[
+  ["Name the five functions of the skeleton.","Support, protection, movement, blood cell production, storage of minerals."],
+  ["Give an example of a ball and socket joint.","Shoulder or hip."],
+  ["Give an example of a hinge joint.","Knee or elbow."],
+  ["What is flexion?","Decreasing the angle at a joint, e.g. bending the elbow."],
+  ["What is abduction?","Movement away from the midline of the body."],
+  ["What does a ligament join?","Bone to bone."],
+  ["What does a tendon join?","Muscle to bone."],
+  ["Which bone protects the brain?","The cranium (skull)."]],
+ "Muscular system":[
+  ["Which antagonistic pair works at the elbow?","Biceps and triceps."],
+  ["What is the agonist?","The muscle that contracts to cause the movement (prime mover)."],
+  ["Which muscle extends the knee?","Quadriceps."],
+  ["Which muscle flexes the knee?","Hamstrings."],
+  ["Which muscle causes plantar flexion at the ankle?","Gastrocnemius."],
+  ["Which muscle causes dorsiflexion at the ankle?","Tibialis anterior."],
+  ["Which muscle abducts the shoulder?","Deltoid."],
+  ["Which muscle extends the hip?","Gluteals."]],
+ "Movement analysis":[
+  ["In a first class lever, what is in the middle?","The fulcrum, e.g. the neck when nodding."],
+  ["In a second class lever, what is in the middle?","The load, e.g. the ankle when going up on your toes."],
+  ["In a third class lever, what is in the middle?","The effort, e.g. the elbow during a bicep curl."],
+  ["Which lever has a high mechanical advantage?","Second class lever."],
+  ["Which plane and axis does a front somersault use?","Sagittal plane, frontal axis."],
+  ["Which plane and axis does a star jump use?","Frontal plane, sagittal axis."],
+  ["Which plane and axis does a full twist use?","Transverse plane, longitudinal axis."]],
+ "Heart and lungs":[
+  ["What do arteries do?","Carry blood away from the heart at high pressure."],
+  ["Why do veins have valves?","To stop blood flowing backwards."],
+  ["Why are capillaries good for gas exchange?","Walls one cell thick, so a short diffusion distance."],
+  ["Give the equation for cardiac output.","Cardiac output = stroke volume × heart rate."],
+  ["Name two features of alveoli that help gaseous exchange.","Large surface area, thin walls, good blood supply, moist."],
+  ["What is aerobic exercise?","Exercise with oxygen: long duration, low to moderate intensity, e.g. marathon."],
+  ["What is anaerobic exercise?","Exercise without oxygen: short, high intensity, e.g. 100 m sprint."],
+  ["What is tidal volume?","The amount of air breathed in or out in a normal breath."]],
+ "Effects of exercise":[
+  ["Give two short-term effects of exercise on the cardiovascular system.","Heart rate rises, stroke volume rises, cardiac output rises."],
+  ["What causes muscle fatigue during anaerobic exercise?","Build-up of lactic acid."],
+  ["What is EPOC (oxygen debt)?","Extra oxygen taken in after exercise to recover and remove lactic acid."],
+  ["Give a long-term effect of training on the heart.","Hypertrophy: the heart gets bigger and stronger."],
+  ["What is bradycardia?","A lower resting heart rate, a long-term effect of aerobic training."],
+  ["Give a long-term effect on the respiratory system.","Increased vital capacity or stronger respiratory muscles."],
+  ["Give an immediate effect of exercise you can see.","Red skin (flushing) or sweating."]],
+ "Components of fitness":[
+  ["Which test measures cardiovascular endurance?","Multi-stage fitness test (bleep test)."],
+  ["Which test measures flexibility?","Sit and reach test."],
+  ["Which test measures agility?","Illinois agility run."],
+  ["Which test measures power?","Vertical jump test."],
+  ["Which test measures reaction time?","Ruler drop test."],
+  ["Which test measures balance?","Stork stand test."],
+  ["Which test measures grip strength?","Handgrip dynamometer."],
+  ["Define power.","Strength × speed."]],
+ "Principles of training":[
+  ["What does SPORT stand for?","Specificity, Progression, Overload, Reversibility, Tedium."],
+  ["What does FITT stand for?","Frequency, Intensity, Time, Type."],
+  ["How do you estimate maximum heart rate?","220 minus age."],
+  ["What is the aerobic training zone?","60–80% of maximum heart rate."],
+  ["What is fartlek training?","Speed play: continuous running with changes of pace and terrain."],
+  ["What is interval training?","Periods of work followed by periods of rest or recovery."],
+  ["Name the three stages of a warm-up.","Pulse raiser, stretching, skill-based activity."],
+  ["What is reversibility?","Losing fitness when training stops."]],
+ "Injury and PEDs":[
+  ["What does RICE stand for?","Rest, Ice, Compression, Elevation."],
+  ["Why might an archer take beta blockers?","To slow heart rate and steady the hands."],
+  ["What do anabolic steroids do?","Increase muscle mass and strength, and speed up recovery."],
+  ["Give a side effect of anabolic steroids.","Liver damage, heart disease, aggression, acne."],
+  ["Why might a boxer take diuretics?","To lose weight quickly to make a weight category."],
+  ["What do stimulants do?","Increase alertness and reduce tiredness."],
+  ["Give two ways to prevent injury.","Warm up, wear protective equipment, follow the rules, check equipment."]],
+ "Engagement and commercialisation":[
+  ["Name three factors that affect participation in sport.","Age, gender, ethnicity, disability, family, cost, access, role models."],
+  ["What is the golden triangle?","The link between sport, the media and sponsorship."],
+  ["Give a positive of sponsorship for a performer.","Money to train full time, free equipment."],
+  ["Give a negative of media coverage for sport.","Changes to rules or times, more pressure, less coverage of minority sports."],
+  ["What is commercialisation?","Managing sport to make a profit."],
+  ["Give one way to increase participation of women in sport.","Female role models, women-only sessions, more media coverage."]],
+ "Ethics in sport":[
+  ["Define sportsmanship.","Playing fairly and showing respect within the spirit of the game."],
+  ["Define gamesmanship.","Bending the rules to gain an advantage without breaking them."],
+  ["Give an example of gamesmanship.","Time-wasting or sledging."],
+  ["What is deviance?","Behaviour that goes against the rules or morals of sport."],
+  ["Give two reasons a performer might take PEDs.","Pressure to win, money, fame, to recover faster."]],
+ "Skill and goal setting":[
+  ["What does SMART stand for?","Specific, Measurable, Achievable, Realistic, Time-bound."],
+  ["What is an open skill?","A skill affected by the environment, e.g. a pass in football."],
+  ["What is a closed skill?","A skill not affected by the environment, e.g. a golf putt."],
+  ["Give three characteristics of skilful movement.","Efficient, pre-determined, coordinated, fluent, aesthetic."],
+  ["What is a complex skill?","A skill needing lots of decisions and concentration, e.g. a tumble turn."],
+  ["Why set goals?","To improve motivation, focus and performance."]],
+ "Guidance and feedback":[
+  ["Name the four types of guidance.","Visual, verbal, manual, mechanical."],
+  ["Which guidance suits a beginner best?","Visual guidance (a demonstration)."],
+  ["What is intrinsic feedback?","Feedback from within: how the movement felt."],
+  ["What is extrinsic feedback?","Feedback from outside, e.g. a coach."],
+  ["What is knowledge of results?","Feedback on the outcome, e.g. the score or time."],
+  ["What is knowledge of performance?","Feedback on how well the technique was done."],
+  ["What is mental rehearsal?","Picturing the skill in your head before doing it."]],
+ "Health and diet":[
+  ["Name the three parts of health.","Physical, emotional (mental) and social well-being."],
+  ["Give two consequences of a sedentary lifestyle.","Weight gain or obesity, heart disease, type 2 diabetes, poor sleep."],
+  ["What is the main source of energy in the diet?","Carbohydrates."],
+  ["Why do athletes need protein?","Growth and repair of muscle."],
+  ["What is carbo-loading?","Eating extra carbohydrates before an endurance event."],
+  ["Why is hydration important?","Prevents dehydration, controls body temperature, keeps blood flowing well."],
+  ["What does fibre do?","Helps digestion and prevents constipation."]]
+};
+const MATHS = {
+ "Multipliers":[
+  ["What is the multiplier to increase by 9%?","1.09 (not 1.9 or 1.19)"],
+  ["What is the multiplier to decrease by 12%?","0.88"],
+  ["Increase 80 by 15%.","80 × 1.15 = 92"],
+  ["Decrease 1250 by 38%.","1250 × 0.62 = 775"],
+  ["Decrease 194 by 91%.","194 × 0.09 = 17.46"],
+  ["Increase 6000 km by 23%.","6000 × 1.23 = 7380 km"]],
+ "Percentage change":[
+  ["Write the formula for percentage change.","(new − old) ÷ old × 100"],
+  ["A price goes from £40 to £56. Find the percentage change.","(56 − 40) ÷ 40 × 100 = 40% increase"],
+  ["A price goes from £80 to £72. Find the percentage change.","(72 − 80) ÷ 80 × 100 = −10%, a 10% decrease"],
+  ["A car's value falls from £20,000 to £15,000. Find the percentage change.","25% decrease"],
+  ["Which number do you always divide by in percentage change?","The OLD (original) value."]],
+ "Reverse percentages":[
+  ["After a 20% increase a coat costs £72. Find the original price.","72 ÷ 1.2 = £60"],
+  ["After a 25% reduction a TV costs £300. Find the original price.","300 ÷ 0.75 = £400"],
+  ["After a 15% decrease a bike costs £170. Find the original price.","170 ÷ 0.85 = £200"],
+  ["After an 8% increase a bill is £54. What was it before?","54 ÷ 1.08 = £50"],
+  ["Reverse percentages: multiply or divide by the multiplier?","Divide by the multiplier."],
+  ["Why can't you just take 20% off the new price to undo a 20% increase?","The 20% was of the original amount, not the new one."]],
+ "Compound interest":[
+  ["Write the compound interest formula.","Amount = original × multiplier^years"],
+  ["£20,000 earns 10% compound interest for 3 years. Final amount?","20,000 × 1.1³ = £26,620"],
+  ["£10,000 depreciates 5% a year for 2 years. Value?","10,000 × 0.95² = £9025"],
+  ["£1800 earns 4% compound interest for 4 years. Final amount?","1800 × 1.04⁴ = £2105.75"],
+  ["£500 earns 14% compound interest for 8 years. Final amount?","500 × 1.14⁸ = £1426.29 (multiplier 1.14, not 0.14)"],
+  ["£5600 earns 4.8% compound interest for 6 years. Final amount?","5600 × 1.048⁶ = £7419.18"],
+  ["A car worth £12,000 depreciates 15% a year for 3 years. Value?","12,000 × 0.85³ = £7369.50"],
+  ["£30 increases by 10% then by 15%. New amount?","30 × 1.1 × 1.15 = £37.95"]],
+ "Vectors":[
+  ["a = (6, 4). Find 3a.","(18, 12)"],
+  ["b = (3, −2). Find 2b.","(6, −4): multiply both numbers by 2."],
+  ["a = (6, 4). Find ½a.","(3, 2)"],
+  ["Find (2, 7) + (−1, −2).","(1, 5)"],
+  ["Find (3, 0) − (1, 4).","(2, −4)"],
+  ["p = (−3, 6). Find −2p.","(6, −12)"],
+  ["Is (4, −10) parallel to (−2, 5)?","Yes. (4, −10) = −2 × (−2, 5)."],
+  ["Is (9, 12) parallel to (6, 9)?","No. 9 ÷ 6 = 1.5 but 12 ÷ 9 is not 1.5."],
+  ["What does a minus sign do to a vector?","Same length, opposite direction."]],
+ "Averages and frequency polygons":[
+  ["How do you estimate the mean from a grouped table?","Σ(frequency × midpoint) ÷ total frequency"],
+  ["What is the midpoint of 20 ≤ x < 30?","25"],
+  ["Frequencies 4, 6, 10 with midpoints 5, 15, 25. Estimate the mean.","(20 + 90 + 250) ÷ 20 = 18"],
+  ["Why is the mean from a grouped table only an estimate?","You don't know the exact values inside each group."],
+  ["How do you draw a frequency polygon?","Plot frequency against the midpoint of each group and join with straight lines."],
+  ["What must you divide by for the mean: number of groups or total frequency?","Total frequency."]]
+};
+const SUBJECTS = {Maths:MATHS, PE:BANK};
+const START = new Date(2026,9,27);
+const todayKey = (()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")})();
+const dayNum = Math.max(0, Math.floor((new Date().setHours(0,0,0,0) - START.getTime())/86400000));
+function seeded(seed){return()=>{seed=(seed*9301+49297)%233280;return seed/233280}}
+function shuffle(arr,rnd){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+let subject="Maths", topic="", deck=[];
+function buildDeck(){
+  const bank=SUBJECTS[subject], topics=Object.keys(bank), rnd=seeded(dayNum+(subject==="PE"?7:31));
+  if(subject==="Maths"){
+    // exam prep: mixed paper, 2 cards from each of her 5 most recent topics
+    topic="Exam mix";
+    const pool=topics.flatMap(t=>shuffle(bank[t],rnd).slice(0,2).map(c=>({q:c[0],a:c[1],t,rev:false})));
+    deck=shuffle(pool,rnd).slice(0,10);
+  } else {
+    topic=topics[dayNum % topics.length];
+    const main=shuffle(bank[topic],rnd).slice(0,7).map(c=>({q:c[0],a:c[1],t:topic,rev:false}));
+    const review=shuffle(topics.filter(t=>t!==topic),rnd).slice(0,3).map(t=>{const c=shuffle(bank[t],rnd)[0];return{q:c[0],a:c[1],t,rev:true}});
+    deck=shuffle(main.concat(review),rnd);
+  }
+  $("topicName").textContent = subject==="Maths" ? "Maths: exam mix" : "PE: "+topic;
+  $("howTo").textContent = subject==="Maths"
+    ? "10 questions mixed from multipliers, percentage change, reverse percentages, compound interest, vectors and averages. Work each one out on paper with a calculator first, then flip and check."
+    : "10 flashcards: 7 on today's topic and 3 review cards from earlier topics. Say or write the answer first, then flip and be honest with your mark.";
+  $("examIntro").hidden = subject!=="Maths";
+  $("subMaths").setAttribute("aria-selected",subject==="Maths"); $("subPE").setAttribute("aria-selected",subject==="PE");
+}
+
+const $=id=>document.getElementById(id);
+$("today").textContent = new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
+$("subMaths").onclick=()=>{subject="Maths";buildDeck()};
+$("subPE").onclick=()=>{subject="PE";buildDeck()};
+subject="Maths"; buildDeck();
+
+function lsGet(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function renderStreak(){
+  const days = lsGet("maths-days")||[];
+  let s=0; const d=new Date(); d.setHours(0,0,0,0);
+  const has=x=>days.includes(x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0"));
+  if(!has(d)) d.setDate(d.getDate()-1);
+  while(has(d)){s++;d.setDate(d.getDate()-1)}
+  $("streak").innerHTML = s ? s+"-day streak" : "<span class='note'>Start a streak today</span>";
+  if((lsGet("maths-days")||[]).includes(todayKey)){$("doneNote").hidden=false;$("doneNote").textContent="You've already done today's 10. You can do it again for extra practice."}
+}
+renderStreak();
+
+let i=0, results=[], secs=600, tick=null, startTime=0;
+function drawLanes(){
+  $("lanes").innerHTML = deck.map((_,k)=>`<span class="${k<results.length?(results[k]?'ok':'no'):(k===i?'now':'')}"></span>`).join("");
+}
+function showCard(){
+  const c=deck[i];
+  $("count").textContent="Card "+(i+1)+" of "+deck.length;
+  $("cardTag").innerHTML = c.rev ? `<span class="chip rev">Review · ${c.t}</span>` : `<span class="chip">${c.t}</span>`;
+  $("q").textContent=c.q; $("a").textContent=c.a; $("a").hidden=true;
+  $("flipRow").hidden=false; $("markRow").hidden=true; drawLanes(); $("flipBtn").focus();
+}
+$("startBtn").onclick=()=>{
+  $("intro").hidden=true; $("examIntro").hidden=true; $("quiz").hidden=false; i=0; results=[]; secs=600; startTime=Date.now();
+  clearInterval(tick); tick=setInterval(()=>{secs=Math.max(0,secs-1);$("timer").textContent=Math.floor(secs/60)+":"+String(secs%60).padStart(2,"0")},1000);
+  showCard();
+};
+$("flipBtn").onclick=()=>{$("a").hidden=false;$("flipRow").hidden=true;$("markRow").hidden=false;$("gotBtn").focus()};
+function mark(ok){results.push(ok); i++; if(i<deck.length) showCard(); else finish();}
+$("gotBtn").onclick=()=>mark(true); $("notBtn").onclick=()=>mark(false);
+
+async function finish(){
+  clearInterval(tick);
+  const score=results.filter(Boolean).length, mins=Math.max(1,Math.round((Date.now()-startTime)/60000));
+  const missed=deck.filter((_,k)=>!results[k]).map(c=>c.q);
+  $("quiz").hidden=true; $("result").hidden=false;
+  $("score").textContent=score+"/10";
+  $("resultMsg").textContent = score>=9?"Brilliant. This topic is green.":score>=6?"Good work. Look over the cards you missed tonight.":"This topic is red for now. Make flashcards for the missed questions and try again tomorrow.";
+  $("missed").innerHTML = missed.map(q=>"<li>"+q.replace(/</g,"&lt;")+"</li>").join(""); $("missedWrap").hidden=!missed.length;
+  const days=lsGet("maths-days")||[]; if(!days.includes(todayKey)){days.push(todayKey);lsSet("maths-days",days)} renderStreak();
+  const summary=`Alara ${subject} Daily 10 – ${todayKey} – ${topic} – ${score}/10 in ${mins} min`+(missed.length?` – missed: ${missed.join("; ")}`:"");
+  await saveResult({date:todayKey,subject,topic,score,total:10,minutes:mins,missed},summary);
+}
+const SUBMIT_URL = "https://script.google.com/macros/s/AKfycbyhSzx1_q1cwwXfr2-6Ru4yMl-RM3NzKA3nElTYMwo-zmfZX7IL06pVYAw8AlMhYy1h/exec";
+async function saveResult(row,summary){
+  $("summary").value=summary; $("copyWrap").hidden=true;
+  $("saveNote").textContent="Sending your result to Mr Ali…";
+  const code="D10-"+row.date+"-"+row.subject.replace(/\W+/g,"")+"-"+row.score+"of"+row.total;
+  const body=JSON.stringify({student:"Alara",group:"y10s4",type:row.subject==="Maths exam Qs"?"Exit ticket (exam questions)":"Daily 10 "+row.subject,week:0,topic:row.topic+(row.missed&&row.missed.length?" | missed: "+row.missed.join("; "):""),score:row.score+"/"+row.total,code});
+  try{ await fetch(SUBMIT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body});
+    $("saveNote").textContent="✓ Sent to Mr Ali.";}
+  catch(e){ $("saveNote").textContent="Couldn't send just now. Copy your result and send it to Mr Ali."; $("copyWrap").hidden=false }
+}
+
+// ---- Maths exam countdown: exam-style questions until Monday 2 Nov ----
+const EXAM = [
+ {date:"2026-10-27",focus:"Multipliers and percentage change",qs:[
+  ["A laptop costs £650. The price increases by 12%.\nWork out the new price.",2,"Multiplier = 1.12\n650 × 1.12 = £728"],
+  ["Sam's hourly pay goes up from £9.50 to £11.40.\nWork out the percentage increase.",2,"Increase = 11.40 − 9.50 = 1.90\n1.90 ÷ 9.50 × 100 = 20%"],
+  ["Shop A sells a jacket for £80 with 15% off.\nShop B sells the same jacket for £75 with 1/10 off.\nWhich shop is cheaper? Show your working.",3,"Shop A: 80 × 0.85 = £68\nShop B: 75 × 0.9 = £67.50\nShop B is cheaper (by 50p)."],
+  ["Ella says: \"To decrease 60 by 5%, multiply by 0.5.\"\nExplain her mistake and work out the correct answer.",2,"The multiplier for a 5% decrease is 0.95, not 0.5 (0.5 halves it).\n60 × 0.95 = 57"]]},
+ {date:"2026-10-28",focus:"Reverse percentages",qs:[
+  ["In a sale all prices are reduced by 30%.\nA dress costs £42 in the sale.\nWork out the original price.",3,"Sale price is 70% of the original, multiplier 0.7\n42 ÷ 0.7 = £60"],
+  ["A price including 20% VAT is £180.\nWork out the price before VAT.",2,"180 ÷ 1.2 = £150"],
+  ["A town's population increased by 4% to 23,400.\nWhat was the population before the increase?",2,"23,400 ÷ 1.04 = 22,500"],
+  ["Tom says: \"The sale price is £42 after 30% off, so the original is 42 × 1.3 = £54.60.\"\nExplain why Tom is wrong.",2,"The 30% was taken off the ORIGINAL price, not the sale price.\nCorrect method: 42 ÷ 0.7 = £60"]]},
+ {date:"2026-10-29",focus:"Compound interest and depreciation",qs:[
+  ["£3000 is invested at 2.5% compound interest per year.\nWork out the value after 4 years. Give your answer to the nearest penny.",3,"3000 × 1.025⁴\n= 3000 × 1.10381...\n= £3311.44"],
+  ["A car is bought for £15,000. It depreciates by 12% each year.\nWork out its value after 3 years.",3,"Multiplier 0.88\n15,000 × 0.88³ = £10,222.08"],
+  ["Ali invests £2000 for 3 years.\nBank A: 3% simple interest per year.\nBank B: 2.8% compound interest per year.\nWhich bank gives more money? Show your working.",4,"Bank A: 3% of 2000 = £60 a year, 60 × 3 = £180, total £2180\nBank B: 2000 × 1.028³ = £2172.75\nBank A gives more (by £7.25)."],
+  ["£500 is invested at 6% compound interest per year.\nAfter how many whole years will it first be worth more than £700?",3,"500 × 1.06⁵ = £669.11 (not enough)\n500 × 1.06⁶ = £709.26\nAnswer: 6 years"]]},
+ {date:"2026-10-30",focus:"Vectors",qs:[
+  ["a = (2, −3) and b = (−1, 4).\nWork out 2a + b as a column vector.",2,"2a = (4, −6)\n2a + b = (4 + −1, −6 + 4) = (3, −2)"],
+  ["a = (5, 1) and b = (2, −3).\nWork out a − 2b.",2,"2b = (4, −6)\na − 2b = (5 − 4, 1 − (−6)) = (1, 7)"],
+  ["Is (−6, 9) parallel to (2, −3)? Give a reason.",2,"Yes. (−6, 9) = −3 × (2, −3), so it is a multiple of it."],
+  ["The vector (4, k) is parallel to (2, 5).\nFind the value of k.",2,"4 = 2 × 2, so multiply by 2\nk = 5 × 2 = 10"],
+  ["OA = a and OB = b.\nWrite the vector AB in terms of a and b.",1,"AB = AO + OB = −a + b = b − a"]]},
+ {date:"2026-10-31",focus:"Averages and frequency polygons",qs:[
+  ["Time (t min) and frequency:\n0 < t ≤ 10: 5\n10 < t ≤ 20: 12\n20 < t ≤ 30: 8\n30 < t ≤ 40: 5\nWrite down the modal class.",1,"10 < t ≤ 20 (highest frequency, 12)"],
+  ["Use the same table.\nWork out an estimate for the mean time.",4,"Midpoints: 5, 15, 25, 35\nf × midpoint: 25 + 180 + 200 + 175 = 580\nTotal frequency = 30\n580 ÷ 30 = 19.3 minutes (1 d.p.)"],
+  ["Use the same table.\nWhich class contains the median?",1,"30 people, so the median is the 15th–16th value.\nRunning totals: 5, 17 → 10 < t ≤ 20"],
+  ["Explain why your answer for the mean is only an estimate.",1,"We don't know the exact times, so we use the midpoint of each group."],
+  ["You draw a frequency polygon for the table.\nWhat are the coordinates of the first point?",1,"(5, 5): midpoint 5, frequency 5"]]},
+ {date:"2026-11-01",focus:"Mini mock: everything",qs:[
+  ["A phone cost £480. It now costs £408.\nWork out the percentage decrease.",2,"Decrease = 72\n72 ÷ 480 × 100 = 15%"],
+  ["After a 15% increase a ticket costs £46.\nWork out the original price.",2,"46 ÷ 1.15 = £40"],
+  ["£8000 is invested at 3.5% compound interest for 2 years.\nWork out the total interest earned.",3,"8000 × 1.035² = £8569.80\nInterest = 8569.80 − 8000 = £569.80"],
+  ["a = (3, −1). Work out −4a.",1,"(−12, 4)"],
+  ["Groups and frequencies:\n0 < x ≤ 4: 3\n4 < x ≤ 8: 7\n8 < x ≤ 12: 10\nEstimate the mean.",3,"Midpoints 2, 6, 10\n6 + 42 + 100 = 148\n148 ÷ 20 = 7.4"]]}
+];
+(function initExam(){
+  const fmt=d=>new Date(d+"T12:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
+  $("exDay").innerHTML = EXAM.map((s,k)=>`<option value="${k}">Day ${k+1} · ${fmt(s.date)} · ${s.focus}</option>`).join("");
+  let idx = EXAM.findIndex(s=>s.date===todayKey);
+  if(idx<0) idx = todayKey<EXAM[0].date?0:EXAM.length-1;
+  $("exDay").value=String(idx);
+  const VIDS={
+    "Multipliers and percentage change":[["Percentage increase and decrease with multipliers","corbettmaths percentage multipliers"],["Percentage change","corbettmaths percentage change"]],
+    "Reverse percentages":[["Reverse percentages","corbettmaths reverse percentages"]],
+    "Compound interest and depreciation":[["Compound interest","corbettmaths compound interest"],["Depreciation","corbettmaths depreciation"]],
+    "Vectors":[["Vectors: column vectors, adding and multiplying","corbettmaths vectors"]],
+    "Averages and frequency polygons":[["Estimated mean from a grouped frequency table","corbettmaths mean from grouped frequency table"],["Frequency polygons","corbettmaths frequency polygons"]]};
+  VIDS["Mini mock: everything"]=Object.values(VIDS).map(v=>v[0]);
+  const title=()=>{const s=EXAM[+$("exDay").value]; $("exTitle").textContent=(s.date===todayKey?"Today: ":"")+s.focus;
+    $("exVideos").innerHTML=(VIDS[s.focus]||[]).map(([t,q])=>`<a href="https://www.youtube.com/results?search_query=${encodeURIComponent(q)}" target="_blank" rel="noopener" style="color:var(--lane);font-weight:700">▶ ${t} (Corbettmaths)</a>`).join("")};
+  $("exDay").onchange=title; title();
+})();
+let ex=null, exI=0, exGot=[], exStartT=0;
+function showEx(){
+  const [q,m,a]=ex.qs[exI];
+  $("exCount").textContent="Question "+(exI+1)+" of "+ex.qs.length;
+  $("exMarks").textContent=m+(m>1?" marks":" mark");
+  $("exQ").textContent=q; $("exA").textContent=a; $("exA").hidden=true;
+  $("exFlipRow").hidden=false; $("exMarkRow").hidden=true;
+  $("exBtns").innerHTML=Array.from({length:m+1},(_,k)=>`<button data-m="${k}" class="${k===m?'good':k===0?'bad':''}">${k}</button>`).join("");
+  $("exFlip").focus();
+}
+$("exStart").onclick=()=>{ex=EXAM[+$("exDay").value];exI=0;exGot=[];exStartT=Date.now();
+  $("intro").hidden=true;$("examIntro").hidden=true;$("exam").hidden=false;showEx()};
+$("exFlip").onclick=()=>{$("exA").hidden=false;$("exFlipRow").hidden=true;$("exMarkRow").hidden=false};
+$("exBtns").onclick=e=>{const b=e.target.closest("button");if(!b)return;exGot.push(+b.dataset.m);exI++;if(exI<ex.qs.length)showEx();else finishExam()};
+async function finishExam(){
+  const total=ex.qs.reduce((s,q)=>s+q[1],0), score=exGot.reduce((s,x)=>s+x,0), mins=Math.max(1,Math.round((Date.now()-exStartT)/60000));
+  const missed=ex.qs.filter((q,k)=>exGot[k]<q[1]).map(q=>q[0].split("\n").slice(-1)[0]);
+  $("exam").hidden=true;$("result").hidden=false;
+  $("score").textContent=score+"/"+total;
+  const pc=score/total;
+  $("resultMsg").textContent=pc>=0.8?"Exam ready on this topic. Keep it fresh with the Daily 10.":pc>=0.5?"Nearly there. Redo the questions where you lost marks, using the worked answers.":"Go back over this topic tonight and ask Mr Ali about it in your next session.";
+  $("missed").innerHTML=missed.map(q=>"<li>"+q.replace(/</g,"&lt;")+"</li>").join("");$("missedWrap").hidden=!missed.length;
+  await saveResult({date:todayKey,subject:"Maths exam Qs",topic:ex.focus,score,total,minutes:mins,missed},
+    `Alara Maths exam questions – ${todayKey} – ${ex.focus} – ${score}/${total} marks in ${mins} min`);
+}
+$("copyBtn").onclick=()=>{const t=$("summary");navigator.clipboard.writeText(t.value).then(()=>{$("copyBtn").textContent="Copied"}).catch(()=>{t.select()})};
+
+</script>
+
+</body></html>
