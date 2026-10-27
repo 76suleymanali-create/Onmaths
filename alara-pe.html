@@ -406,15 +406,14 @@ const EXAM = [
   let idx = EXAM.findIndex(s=>s.date===todayKey);
   if(idx<0) idx = todayKey<EXAM[0].date?0:EXAM.length-1;
   $("exDay").value=String(idx);
-  const VIDS={
-    "Multipliers and percentage change":[["Percentage increase and decrease with multipliers","corbettmaths percentage multipliers"],["Percentage change","corbettmaths percentage change"]],
-    "Reverse percentages":[["Reverse percentages","corbettmaths reverse percentages"]],
-    "Compound interest and depreciation":[["Compound interest","corbettmaths compound interest"],["Depreciation","corbettmaths depreciation"]],
-    "Vectors":[["Vectors: column vectors, adding and multiplying","corbettmaths vectors"]],
-    "Averages and frequency polygons":[["Estimated mean from a grouped frequency table","corbettmaths mean from grouped frequency table"],["Frequency polygons","corbettmaths frequency polygons"]]};
-  VIDS["Mini mock: everything"]=Object.values(VIDS).map(v=>v[0]);
+  const V={pc:["Percentage change and reverse percentages","Y11-Set4-Foundation-L1-Percentage-change-reverse-percentages",1.1],
+    ci:["Compound interest and depreciation","Y10-Set3-V6-Compound-interest-depreciation",1.18],
+    ve:["Vectors","Y10-Set1-V7-Vectors",1],
+    av:["Averages from grouped data and frequency polygons","Y10-Set4-Alara-Averages-frequency-polygons",1]};
+  const VIDS={"Multipliers and percentage change":[V.pc],"Reverse percentages":[V.pc],"Compound interest and depreciation":[V.ci],"Vectors":[V.ve],"Averages and frequency polygons":[V.av],"Mini mock: everything":[]};
   const title=()=>{const s=EXAM[+$("exDay").value]; $("exTitle").textContent=(s.date===todayKey?"Today: ":"")+s.focus;
-    $("exVideos").innerHTML=(VIDS[s.focus]||[]).map(([t,q])=>`<a href="https://www.youtube.com/results?search_query=${encodeURIComponent(q)}" target="_blank" rel="noopener" style="color:var(--lane);font-weight:700">▶ ${t} (Corbettmaths)</a>`).join("")};
+    $("exVideos").innerHTML=(VIDS[s.focus]||[]).length?(VIDS[s.focus]).map(([t,f,r])=>`<div style="font-weight:700">${t} · 2 min</div><video controls playsinline preload="none" data-rate="${r}" poster="files/${f}-poster.jpg" style="width:100%;border-radius:10px;background:#000"><source src="files/${f}.mp4" type="video/mp4"></video>`).join(""):`<div class="note">No new video today. Rewatch any video from Days 1–5 if a question goes wrong.</div>`;
+    $("exVideos").querySelectorAll("video").forEach(v=>{const r=+v.dataset.rate||1;v.addEventListener("play",()=>{v.playbackRate=r})})};
   $("exDay").onchange=title; title();
 })();
 let ex=null, exI=0, exGot=[], exStartT=0;
