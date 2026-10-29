@@ -1914,12 +1914,15 @@ function sendBlock(code, codeAttr){
 function sendResult(type, g, i, marks, max, code, topic, box, answers){
   if (!SENDING) return;
   const show = t => { const el = box && box.querySelector(`.sendst[data-code="${code}"]`); if (el) el.textContent = t };
-  if (wasSent(code)){ show("✓ Sent to Mr Ali. Your result is saved."); return }
+  if (wasSent(code) && (!answers || (() => { try { return !!localStorage.getItem("onmaths-full-" + code) } catch(e){ return true } })())){ show("✓ Sent to Mr Ali. Your result is saved."); return }
   const body = JSON.stringify({ student: myName(), group: g, type, week: i + 1, topic, score: `${marks.reduce((a, b) => a + b, 0)}/${max}`, code, answers: answers ? JSON.stringify(answers).slice(0, 40000) : "" });
+  if (sendResult.busy.has(code)) return; sendResult.busy.add(code);
+  try { if (answers) localStorage.setItem("onmaths-full-" + code, "1") } catch(e){}
   fetch(SUBMIT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body })
     .then(() => { try { localStorage.setItem("onmaths-sent-" + code, "1") } catch(e){} show("✓ Sent to Mr Ali. Your result is saved.") },
-          () => show("Couldn't send just now. Check your internet, then reload this page and it will try again."));
+          () => { try { localStorage.removeItem("onmaths-full-" + code) } catch(e){} show("Couldn't send just now. Check your internet, then reload this page and it will try again.") });
 }
+sendResult.busy = new Set();
 /* ===== Answer-format help: hint under each box, live preview, shared keypad ===== */
 function ansHint(part){
   const k = part[0], a = Array.isArray(part[1]) ? part[1].join(" ") : String(part[1]);
@@ -2054,6 +2057,28 @@ document.addEventListener("click", e => { const sv = e.target.closest(".save-lat
 document.addEventListener("click", e => { const o = e.target.closest(".hopt, #etBox .opt"); if (!o) return; const b = draftBox(o); if (b) setTimeout(() => saveDraft(b), 0) });
 const flushPings = () => Object.keys(pingQ).forEach(sendPing);
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flushPings() }); addEventListener("pagehide", flushPings);
+/* ===== Send everything already marked on this phone (with answers) to Mr Ali, once ===== */
+function backfillResults(){ if (!SENDING || TEACHER) return; const nm = myName(); if (!nm) return;
+  const mk = (qs, A) => qs.map((q, k) => { const n = q.key.map((part, j) => { try { return MK.check(part, (A[k] || [])[j] ?? "") } catch(e){ return false } }).filter(Boolean).length; return Math.min(9, Math.floor(q.marks * n / q.key.length)) });
+  let keys = []; try { keys = Object.keys(localStorage) } catch(e){ return }
+  let sent = 0;
+  for (const k of keys){ if (k.endsWith("-d")) continue; let m, d, spec = null;
+    try { d = JSON.parse(localStorage.getItem(k) || "null") } catch(e){ continue } if (!d || !Array.isArray(d.a)) continue;
+    try {
+      if ((m = k.match(/^onmaths-hw-([a-z0-9]+)-(\d+)$/))){ const g = m[1], i = +m[2], I = hwInfo(g, i), K = HKEYS[I.base]; if (I.hw && K) spec = { g, i, T: "H", label: "Homework", topic: I.topic, qs: I.hw.map((q, x) => ({ marks: q[1], key: K[x] })) } }
+      else if ((m = k.match(/^onmaths-et-([a-z0-9]+)-(\d+)$/))){ const g = m[1], i = +m[2], et = etOf(g, i), K = KEYS[g] && KEYS[g][i]; if (et && K) spec = { g, i, T: "W", label: "Exit ticket", topic: topicOf(g, i), qs: et.map((q, x) => ({ marks: q[1], key: K[x] })) } }
+      else if ((m = k.match(/^onmaths-pap-(.+)$/))){ const P = papById(m[1]); if (P) spec = { g: P.group, i: papNum(P) - 1, T: papKind(P), label: papKind(P) === "B" ? "Baseline paper" : "Exam paper", topic: P.title, qs: P.questions } }
+      else if ((m = k.match(/^onmaths-test-([a-z0-9]+)-(\d+)$/))){ const T = testOf(m[1], +m[2]); if (T){ const qs = T.r.map(resolveRef); if (qs.every(Boolean)) spec = { g: m[1], i: +m[2] - 1, T: "A", label: "Assessment", topic: T.title, qs } } }
+    } catch(e){ spec = null }
+    if (!spec || !GCODE[spec.g] || spec.qs.length !== d.a.length) continue;
+    const marks = mk(spec.qs, d.a), code = makeCode(spec.g, spec.i, marks, spec.T === "W" ? undefined : spec.T), flag = "onmaths-full-" + code;
+    try { if (localStorage.getItem(flag)) continue } catch(e){ continue }
+    const body = JSON.stringify({ student: nm, group: spec.g, type: spec.label, week: spec.i + 1, topic: spec.topic, score: `${marks.reduce((a, b) => a + b, 0)}/${spec.qs.reduce((a, q) => a + q.marks, 0)}`, code, answers: JSON.stringify(d.a).slice(0, 40000) });
+    try { localStorage.setItem(flag, "1") } catch(e){}
+    fetch(SUBMIT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body }).then(() => { try { localStorage.setItem("onmaths-sent-" + code, "1") } catch(e){} }, () => { try { localStorage.removeItem(flag) } catch(e){} });
+    sent++ }
+  return sent }
+setTimeout(() => { try { backfillResults() } catch(e){} }, 6000);
 /* ===== Online exam papers (baseline + weekly), auto-marked ===== */
 const paplist = document.getElementById("paplist");
 const pnorm = x => String(x || "").trim().toLowerCase().split(/\s+/)[0] || "";
