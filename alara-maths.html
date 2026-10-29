@@ -354,15 +354,24 @@ async function finish(){
   await saveResult({date:todayKey,subject,topic,score,total:10,minutes:mins,missed},summary);
 }
 const SUBMIT_URL = "https://script.google.com/macros/s/AKfycbyhSzx1_q1cwwXfr2-6Ru4yMl-RM3NzKA3nElTYMwo-zmfZX7IL06pVYAw8AlMhYy1h/exec";
+// Every session is kept on this phone and sent to Mr Ali's "Revision" sheet (re-sent later if it didn't go)
+function revLog(){try{return JSON.parse(localStorage.getItem("rev-log"))||[]}catch(e){return []}}
+function revSave(L){try{localStorage.setItem("rev-log",JSON.stringify(L.slice(-200)))}catch(e){}}
+function revSend(r){return fetch(SUBMIT_URL,{method:"POST",mode:"no-cors",keepalive:true,headers:{"Content-Type":"text/plain;charset=utf-8"},
+  body:JSON.stringify({kind:"revision",student:"Alara",group:"y10s4",subject:r.subject,topic:r.topic,score:r.score,total:r.total,missed:(r.missed||[]).join("; "),minutes:r.minutes||"",date:r.date,id:r.id})})}
+function revFlush(){const L=revLog();L.filter(r=>!r.sent).forEach(r=>revSend(r).then(()=>{const M=revLog();const x=M.find(y=>y.id===r.id);if(x){x.sent=1;revSave(M)}},()=>{}))}
 async function saveResult(row,summary){
   $("summary").value=summary; $("copyWrap").hidden=true;
   $("saveNote").textContent="Sending your result to Mr Ali…";
-  const code="D10-"+row.date+"-"+row.subject.replace(/\W+/g,"")+"-"+row.score+"of"+row.total;
-  const body=JSON.stringify({student:"Alara",group:"y10s4",type:row.subject==="Maths exam Qs"?"Exit ticket (exam questions)":"Daily 10 "+row.subject,week:0,topic:row.topic+(row.missed&&row.missed.length?" | missed: "+row.missed.join("; "):""),score:row.score+"/"+row.total,code});
-  try{ await fetch(SUBMIT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body});
+  const r={...row,id:Date.now().toString(36)+Math.random().toString(36).slice(2,6)}; const L=revLog(); L.push(r); revSave(L);
+  try{ await revSend(r); const M=revLog(); const x=M.find(y=>y.id===r.id); if(x){x.sent=1;revSave(M)}
     $("saveNote").textContent="✓ Sent to Mr Ali.";}
-  catch(e){ $("saveNote").textContent="Couldn't send just now. Copy your result and send it to Mr Ali."; $("copyWrap").hidden=false }
+  catch(e){ $("saveNote").textContent="Saved on this phone. It will send to Mr Ali next time you open this page with internet."; }
 }
+// Send earlier best exam-question scores once (from before results were logged), then anything unsent
+(function(){try{if(!localStorage.getItem("rev-backfill")){const d=JSON.parse(localStorage.getItem("exam-done")||"{}");const L=revLog();
+  Object.entries(d).forEach(([focus,v])=>L.push({id:"bf-"+focus.replace(/\W+/g,""),date:v.date,subject:"Maths exam Qs",topic:focus+" (best score)",score:v.score,total:v.total,missed:[],minutes:""}));
+  revSave(L);localStorage.setItem("rev-backfill","1")}}catch(e){} setTimeout(revFlush,1500)})();
 
 // ---- Maths exam countdown: exam-style questions until Monday 2 Nov ----
 const EXAM = [
