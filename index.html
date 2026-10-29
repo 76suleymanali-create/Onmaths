@@ -75,7 +75,7 @@ header nav a:hover{background:color-mix(in srgb,var(--band-ink) 15%,transparent)
 .pp b{font-family:var(--display)}
 .pp .links{margin-top:8px}
 @media (max-width:640px){.hwk summary{grid-template-columns:40px 1fr auto;row-gap:2px}.hwk .dt{grid-column:2;grid-row:1}.hwk .tp{grid-column:2;grid-row:2}.hwk .num{grid-row:1/3}.hwk .status{grid-column:3;grid-row:1/3}}
-.pdfv{position:fixed;inset:0;z-index:40;background:var(--paper);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.pdfv{position:fixed;inset:0;z-index:400;background:var(--paper);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 .pdfv .vbar{position:static}
 .pdfpages{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px max(12px,env(safe-area-inset-right,0px)) 40px max(12px,env(safe-area-inset-left,0px));display:grid;gap:12px;align-content:start;justify-items:center}
 .pdfimg{width:100%;max-width:1000px;height:auto;display:block}
@@ -191,6 +191,12 @@ body.sf-open{overflow:hidden}
 .sf-btns button,.sf-btns .btn,.sf-mini{font:inherit;font-size:.9rem;padding:7px 12px;border:2px solid var(--ink);border-radius:10px;background:var(--card,#fff);color:var(--ink);cursor:pointer;text-decoration:none}
 .sf-go{background:var(--sc,var(--ink))!important;color:#fff!important;border-color:var(--sc,var(--ink))!important;font-weight:700}
 .sf-mini{font-size:.8rem;padding:4px 10px;vertical-align:middle}
+.sf-work{border:1px solid var(--line,#ddd);border-radius:10px;padding:8px 10px}
+.sf-work summary{cursor:pointer;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.sf-work summary small{opacity:.75}
+.sf-q{border-left:4px solid #2E9E5B;padding:6px 10px;margin:8px 0;background:color-mix(in srgb,#2E9E5B 6%,transparent);border-radius:0 8px 8px 0}
+.sf-q.no{border-color:#D2463C;background:color-mix(in srgb,#D2463C 6%,transparent)}
+.sf-q .qt small{opacity:.7}.sf-a{margin-top:4px;font-size:.95rem}.sf-a .y{color:#1E7A45;font-weight:700}.sf-a .n{color:#B3261E;font-weight:700}.sf-a .c{opacity:.85}
 .sf-prog{display:grid;gap:6px}
 .sf-pr{display:grid;grid-template-columns:100px 1fr 90px 44px;gap:8px;align-items:center;font-size:.9rem}
 .sf-k{font-size:.75rem;font-weight:700;opacity:.75}.sf-bar{height:10px;background:var(--line,#eee);border-radius:6px;overflow:hidden}
@@ -338,7 +344,7 @@ body.sf-open{overflow:hidden}
 .st-card:fullscreen .st-q .qq{font-size:clamp(1.3rem,2.6vw,2rem)}
 .st-card:fullscreen .st-q .ans{font-size:clamp(1.3rem,2.4vw,1.8rem)}
 .st-card:fullscreen #stClock{font-size:3rem}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:8px;z-index:30;font-weight:700;max-width:90vw}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:8px;z-index:500;font-weight:700;max-width:90vw}
 a{color:var(--blue)}
 a:focus-visible,button:focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:4px}
 .wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -1764,7 +1770,7 @@ lessonEl.addEventListener("click", async e => {
     if (!dl){ toast("Downloads aren't available in this view. Ask Mr Ali for the file."); return }
     const res = await fetch("decks/" + name + (ext === "pptx" ? ".txt" : "")); if (!res.ok) throw new Error("fetch");
     let blob;
-    if (ext === "pptx"){ const b64 = (await res.text()).trim(); const bin = atob(b64); const u8 = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) u8[k] = bin.charCodeAt(k); blob = new Blob([u8]) } else blob = await res.blob();
+    if (ext === "pptx"){ const b64 = (await res.text()).trim(); const bin = atob(b64); const u8 = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) u8[k] = bin.charCodeAt(k); blob = new Blob([u8], { type: "application/vnd.openxmlformats-officedocument.presentationml.presentation" }) } else blob = await res.blob();
     await dl.save({ filename: name, data: blob });
     toast("Saved " + name);
   } catch (err){
@@ -1905,11 +1911,11 @@ function sendBlock(code, codeAttr){
   if (!SENDING) return `<div>Send this code to Mr Ali:</div><code ${codeAttr}>${code}</code><button type="button" class="copy-code">Copy code</button>`;
   return `<div class="sendst" data-code="${code}">${wasSent(code) ? "✓ Sent to Mr Ali. Your result is saved." : "Sending your result to Mr Ali…"}</div><details class="codebox"><summary>Your code (only if Mr Ali asks for it)</summary><code ${codeAttr}>${code}</code><button type="button" class="copy-code">Copy code</button></details>`;
 }
-function sendResult(type, g, i, marks, max, code, topic, box){
+function sendResult(type, g, i, marks, max, code, topic, box, answers){
   if (!SENDING) return;
   const show = t => { const el = box && box.querySelector(`.sendst[data-code="${code}"]`); if (el) el.textContent = t };
   if (wasSent(code)){ show("✓ Sent to Mr Ali. Your result is saved."); return }
-  const body = JSON.stringify({ student: myName(), group: g, type, week: i + 1, topic, score: `${marks.reduce((a, b) => a + b, 0)}/${max}`, code });
+  const body = JSON.stringify({ student: myName(), group: g, type, week: i + 1, topic, score: `${marks.reduce((a, b) => a + b, 0)}/${max}`, code, answers: answers ? JSON.stringify(answers).slice(0, 40000) : "" });
   fetch(SUBMIT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body })
     .then(() => { try { localStorage.setItem("onmaths-sent-" + code, "1") } catch(e){} show("✓ Sent to Mr Ali. Your result is saved.") },
           () => show("Couldn't send just now. Check your internet, then reload this page and it will try again."));
@@ -1978,7 +1984,7 @@ function drawHwForm(box){
       if (part[0] === "mc") return `<div class="etp" role="group" aria-label="${esc(part[2] || "Choose")}">${part[3].map(o => `<button type="button" class="opt hopt" data-k="${k}" data-j="${j}" data-v="${esc(o)}" aria-pressed="${val === o}"${saved ? " disabled" : ""}>${esc(o)}</button>`).join("")}</div>`;
       return `<div class="etp">${lab}<input id="${id}" data-k="${k}" data-j="${j}" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(val)}"${saved ? " disabled" : ""}>${saved ? "" : ansExtra(part)}</div>`;
     }).join("") + `<div class="res" hidden></div></div>`).join("");
-  if (!saved) h += pad + nameField() + `<button type="button" class="et-go hw-mark">${S.mark}</button>`;
+  if (!saved) h += pad + nameField() + `<button type="button" class="et-go hw-mark">${S.mark}</button><button type="button" class="et-retry save-later">💾 Save and finish later</button>`;
   h += `<div class="hw-result"></div>`;
   form.innerHTML = h; form.hidden = false; const ob = box.querySelector(".hw-open"); if (ob) ob.hidden = true;
   if (saved) hwResult(box, saved.a);
@@ -1994,7 +2000,7 @@ function hwResult(box, answers){
   box.querySelector(".hw-result").innerHTML = `<div class="et-result"><div class="score">${got} / ${max}</div><div>${got === max ? "Brilliant, full marks!" : got / max >= 0.7 ? "Well done. Check the answers above for anything you missed." : "Good try. Look at the answers above and ask Mr Ali about anything you're unsure of."}</div>
     ${S.type !== "H" ? `<div class="tiernote" style="color:inherit;opacity:.85">Only your final answers are marked here. Mr Ali may give extra marks for your working.</div>` : ""}
     ${sendBlock(code, 'class="hw-code"')}<button type="button" class="et-retry hw-retry">↻ Clear and try again</button></div>`;
-  sendResult(S.label, S.g, S.i, marks, max, code, S.topic, box);
+  sendResult(S.label, S.g, S.i, marks, max, code, S.topic, box, answers); dropDraft(box);
 }
 let hwLastInput = null;
 document.addEventListener("focusin", e => { if (e.target.matches(".hwform input[data-k]")) hwLastInput = e.target });
@@ -2015,6 +2021,39 @@ document.addEventListener("click", e => {
   const rt = e.target.closest(".hw-retry"); if (rt){ if (!rt.dataset.sure){ rt.dataset.sure = "1"; rt.textContent = "Tap again to clear your answers"; return }
     try { localStorage.removeItem(formSpec(box).store) } catch(err){} drawHwForm(box); toast("Cleared. Have another go!") }
 });
+/* ===== Save answers as you type, resume later, and tell Mr Ali how far they've got ===== */
+const draftInfo = box => { if (box === etBox){ const g = etBox.dataset.g, i = +etBox.dataset.i; return { key: etStoreKey(g, i) + "-d", g, i, T: "W", label: "Exit ticket", topic: topicOf(g, i), get: () => collect() } }
+  const S = formSpec(box); return { key: S.store + "-d", g: S.g, i: S.i, T: S.type, label: S.label, topic: S.topic, get: () => hwCollect(box) } };
+const draftBox = el => el.closest(".hwon") || (etBox.contains(el) ? etBox : null);
+function dropDraft(box){ try { const D = draftInfo(box); localStorage.removeItem(D.key); clearTimeout(pingT[D.key]); delete pingQ[D.key] } catch(e){} }
+const pingT = {}, pingQ = {}; let restoring = false;
+function sendPing(k){ const b = pingQ[k]; if (!b || !SENDING) return; delete pingQ[k]; clearTimeout(pingT[k]);
+  try { fetch(SUBMIT_URL, { method: "POST", mode: "no-cors", keepalive: true, headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(b) }).catch(() => {}) } catch(e){} }
+function saveDraft(box){ if (restoring) return; let D; try { D = draftInfo(box) } catch(e){ return } if (box.querySelector(".hw-result .et-result") || (box === etBox && document.querySelector("#etResult .et-result"))) return;
+  const a = D.get(), done = a.filter(q => q.some(v => String(v).trim())).length;
+  try { localStorage.setItem(D.key, JSON.stringify({ a, t: Date.now() })) } catch(e){}
+  const nt = box.querySelector(".draftnote"); if (nt) nt.textContent = `✓ Saved on this phone: ${done} of ${a.length} answered. You can close this page and carry on later.`;
+  const nm = myName(); if (!nm || !GCODE[D.g]) return;
+  pingQ[D.key] = { kind: "progress", student: nm, group: D.g, type: D.label, item: `${GCODE[D.g]}-${D.T}${D.i + 1}`, topic: D.topic, answered: done, total: a.length };
+  clearTimeout(pingT[D.key]); pingT[D.key] = setTimeout(() => sendPing(D.key), 20000) }
+function applyDraft(box){ let D, d; try { D = draftInfo(box); d = JSON.parse(localStorage.getItem(D.key) || "null") } catch(e){ return }
+  if (!box.querySelector("input[data-k]:not([disabled]), .hopt:not([disabled]), .opt:not([disabled])")) return;
+  const host = box === etBox ? etBox : box.querySelector(".hwform"); if (!host) return;
+  host.insertAdjacentHTML("afterbegin", `<p class="draftnote tiernote" style="margin:0 0 6px;color:#1E8A55;font-weight:700">✓ Your answers save on this phone as you type. You can close this page and carry on later.</p>`);
+  if (!d || !Array.isArray(d.a)) return; let n = 0; restoring = true;
+  d.a.forEach((q, k) => q.forEach((v, j) => { if (!String(v).trim()) return; const inp = box.querySelector(`input[data-k="${k}"][data-j="${j}"]`); if (inp){ inp.value = v; n++; inp.dispatchEvent(new Event("input", { bubbles: true })); return }
+    box.querySelectorAll(`[data-k="${k}"][data-j="${j}"][data-v]`).forEach(b => { b.setAttribute("aria-pressed", b.dataset.v === v); if (b.dataset.v === v) n++ }) })); restoring = false;
+  if (n){ const done = d.a.filter(q => q.some(v => String(v).trim())).length; box.querySelector(".draftnote").textContent = `↩ Welcome back! Your saved answers are filled in (${done} of ${d.a.length} answered). Carry on where you left off.` } }
+{ const d0 = drawHwForm; drawHwForm = function(box){ d0(box); applyDraft(box) } }
+{ const d1 = drawExit; drawExit = function(g, i){ d1(g, i); applyDraft(etBox) } }
+document.addEventListener("input", e => { if (!e.target.matches("input[data-k]")) return; const b = draftBox(e.target); if (b) saveDraft(b) });
+document.addEventListener("click", e => { const sv = e.target.closest(".save-later"); if (!sv) return; const b = draftBox(sv); if (!b) return;
+  if (!needName(b)) return; restoring = false; saveDraft(b); const D = draftInfo(b); sendPing(D.key);
+  const a = D.get(), done = a.filter(q => q.some(v => String(v).trim())).length;
+  toast(`Saved: ${done} of ${a.length} answered. Open this page again any time to carry on.`) });
+document.addEventListener("click", e => { const o = e.target.closest(".hopt, #etBox .opt"); if (!o) return; const b = draftBox(o); if (b) setTimeout(() => saveDraft(b), 0) });
+const flushPings = () => Object.keys(pingQ).forEach(sendPing);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flushPings() }); addEventListener("pagehide", flushPings);
 /* ===== Online exam papers (baseline + weekly), auto-marked ===== */
 const paplist = document.getElementById("paplist");
 const pnorm = x => String(x || "").trim().toLowerCase().split(/\s+/)[0] || "";
@@ -2097,9 +2136,12 @@ function selectCode(b){ const c = b.previousElementSibling, r = document.createR
 /* ===== In-page viewer: each PDF is also published as one tall picture, so it shows on any phone ===== */
 const pdfv = document.getElementById("pdfv"), pdfPages = document.getElementById("pdfPages");
 let pdfPath = "";
+/* Updated slide previews (fuller I do steps) are served from decks/img */
+["Y11-Set2-Higher-L1-Simultaneous-equations", "Y11-Set2-Higher-L2-Quadratics-factorising-solving", "Y11-Set2-Higher-L3-Compound-interest-depreciation-reverse-percentages", "Y11-Set2-Higher-L4-Trigonometry", "Y11-Set2-Higher-L5-Arcs-sectors-volume", "Y11-Set2-Higher-L6-Probability-tree-diagrams", "Y11-Set2-Higher-L7-Direct-inverse-proportion", "Y11-Set2-Higher-L8-Indices-standard-form", "Y11-Set4-Foundation-L1-Percentage-change-reverse-percentages", "Y11-Set4-Foundation-L2-Ratio-problems", "Y11-Set4-Foundation-L3-Solving-linear-equations", "Y11-Set4-Foundation-L4-Area-perimeter-including-circles", "Y11-Set4-Foundation-L5-Pythagoras-theorem", "Y11-Set4-Foundation-L6-Probability", "Y11-Set4-Foundation-L7-Straight-line-graphs", "Y11-Set4-Foundation-L8-Fractions"].forEach(k => delete IMGS[k]);
 function openPdf(path, title){
   pdfPath = path;
   document.getElementById("pdfTitle").textContent = title;
+  document.getElementById("pdfDl").textContent = isSlides(path) ? "⬇ PowerPoint" : "⬇ Download";
   const key = path.replace(/^decks\//, "").replace(/\.pdf$/, ""), img = IMGS[key] || path.replace(/^decks\//, "decks/img/").replace(/\.pdf$/, ".jpg");
   pdfPages.innerHTML = `<p class="pdfmsg" id="pdfLoading">Loading…</p><img class="pdfimg" alt="${esc(title)}" src="${img}">`;
   const im = pdfPages.querySelector("img");
@@ -2119,7 +2161,7 @@ async function downloadFile(path, btn){
       const r = await fetch(path + ".txt"); if (!r.ok) throw new Error("fetch");
       const bin = atob((await r.text()).trim()), u8 = new Uint8Array(bin.length);
       for (let k = 0; k < bin.length; k++) u8[k] = bin.charCodeAt(k);
-      blob = new Blob([u8]);
+      blob = new Blob([u8], { type: "application/vnd.openxmlformats-officedocument.presentationml.presentation" });
     } else if (FILEURL[name]){ const r = await fetch(FILEURL[name]); if (!r.ok) throw new Error("fetch"); blob = await r.blob() } else {
       const key = name.replace(/\.pdf$/, ""), m2 = key.match(/^(Y11-Set([24])-.*?-L(\d+)-.*?)(-Homework(?:-Student)?)?$/);
       let url = path;
@@ -2134,7 +2176,8 @@ async function downloadFile(path, btn){
   } finally { if (btn) btn.disabled = false }
 }
 document.getElementById("pdfClose").onclick = closePdf;
-document.getElementById("pdfDl").onclick = e => downloadFile(pdfPath, e.currentTarget);
+function isSlides(p){ return TEACHER && /-L\d+-/.test(p) && !/-(Homework|Student|Teacher)(-Student)?\.pdf$/.test(p) }
+document.getElementById("pdfDl").onclick = e => downloadFile(isSlides(pdfPath) ? pdfPath.replace(/\.pdf$/, ".pptx") : pdfPath, e.currentTarget);
 document.addEventListener("keydown", e => { if (e.key === "Escape" && !pdfv.hidden){ e.stopImmediatePropagation(); closePdf() } }, true);
 document.addEventListener("click", e => {
   const v = e.target.closest("[data-pdf]"); if (v){ openPdf(v.dataset.pdf, v.dataset.title); return }
@@ -2179,7 +2222,7 @@ function drawExit(g, i){
       const numeric = part[0] === "num" && typeof part[1] === "number" && part[1] >= 0 && Number.isInteger(part[1] * 100);
       return `<div class="etp">${lab}<input id="${id}" data-k="${k}" data-j="${j}" type="text" ${numeric ? 'inputmode="decimal"' : 'inputmode="text"'} autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(val)}"${saved ? " disabled" : ""}>${saved ? "" : ansExtra(part)}</div>`;
     }).join("") + `<div class="res" id="etr-${k}" hidden></div></div>`).join("");
-  if (!saved) h += pad + nameField() + `<button type="button" class="et-go" id="etGo">Mark my answers</button>`;
+  if (!saved) h += pad + nameField() + `<button type="button" class="et-go" id="etGo">Mark my answers</button><button type="button" class="et-retry save-later">💾 Save and finish later</button>`;
   h += `<div id="etResult"></div>`;
   etBox.innerHTML = h; etBox.dataset.g = g; etBox.dataset.i = i;
   if (saved) showResult(g, i, saved.a);
@@ -2195,7 +2238,7 @@ function showResult(g, i, answers){
   const got = marks.reduce((a, b) => a + b, 0), max = et.reduce((a, q) => a + q[1], 0), code = makeCode(g, i, marks);
   document.getElementById("etResult").innerHTML = `<div class="et-result"><div class="score">${got} / ${max}</div><div>${got === max ? "Brilliant, full marks!" : got / max >= 0.7 ? "Well done. Check the answers above for anything you missed." : "Good try. Look at the answers above and ask Mr Ali about anything you're unsure of."}</div>
     ${sendBlock(code, 'id="etCode"').replace('class="copy-code"', 'id="etCopy"')}<button type="button" id="etRetry" class="et-retry">↻ Clear and try again</button></div>`;
-  sendResult("Exit ticket", g, i, marks, max, code, hwInfo(g, i).topic, document.getElementById("etResult"));
+  sendResult("Exit ticket", g, i, marks, max, code, hwInfo(g, i).topic, document.getElementById("etResult"), answers); dropDraft(etBox);
   return code;
 }
 etWeekSel.addEventListener("change", () => drawExit(etGroup, +etWeekSel.value));
@@ -2232,7 +2275,7 @@ if (TEACHER){
   const nav = document.querySelector("nav"); if (nav && !nav.querySelector('a[href="#tracker"]')){ const a = document.createElement("a"); a.href = "#tracker"; a.textContent = "Tracker"; nav.appendChild(a) }
   document.getElementById("trkGroup").innerHTML = HWGROUPS.map(([id, n]) => `<option value="${id}">${n}</option>`).join("");
   const status = document.getElementById("trkStatus"), pillsEl = document.getElementById("trkStudents"), panel = document.getElementById("trkPanel"), ov = document.getElementById("trkOverview");
-  let db = null, students = [], scores = {}, hws = {}, paps = {}, sel = null, pendingDel = null, show = "all";
+  let db = null, students = [], scores = {}, hws = {}, paps = {}, sel = null, pendingDel = null, show = "all", ansDocs = {}, progRows = [];
   const showEl = document.getElementById("trkShow"); showEl.innerHTML = `<option value="all">All groups</option>` + HWGROUPS.map(([id, n]) => `<option value="${id}">${n}</option>`).join("");
   showEl.addEventListener("change", () => { show = showEl.value; if (show !== "all"){ document.getElementById("trkGroup").value = show; const cur = students.find(x => x.id === sel); if (cur && cur.group !== show) sel = null } renderPills(); renderOverview(); renderPanel() });
   const vis = st => show === "all" || st.group === show;
@@ -2341,10 +2384,31 @@ if (TEACHER){
   function nextLesson(st){ const my = fSlots.filter(x => x.id === st.id); if (!my.length) return null; const now = new Date(), hm = `${p2(now.getHours())}:${p2(now.getMinutes())}`;
     for (let k = 0; k < 8; k++){ const d = new Date(now); d.setDate(now.getDate() + k); const S = my.filter(x => x.day === d.getDay()).sort((a, b) => (a.time || "").localeCompare(b.time || "")).find(x => k > 0 || !x.time || x.time >= hm); if (S) return { d, time: S.time } } return null }
   const shared = st => students.filter(x => x.group === st.group).length > 1;
-  const myLog = st => fLog.filter(e => e.s ? pnorm(e.s) === pnorm(st.name) : e.group === st.group).sort((a, b) => b.date.localeCompare(a.date));
+  const myLog = st => { const seen = new Set(); return fLog.filter(e => e.s ? pnorm(e.s) === pnorm(st.name) : e.group === st.group).sort((a, b) => b.date.localeCompare(a.date) || (b.created || "").localeCompare(a.created || "")).filter(e => { const k = e.date + "|" + e.topic; if (seen.has(k)) return false; seen.add(k); return true }) };
   function planList(g){ const n = isY11(g) ? DATES.length : isSch(g) ? planN(g) : 0;
     if (WEEKPLAN[g]) return WEEKPLAN[g].slice(Math.max(0, SCUR)); if (n) return Array.from({ length: n }, (_, i) => i).slice(Math.max(0, curOf(g))); const i = curLessonIdx(g); return i >= 0 ? [i] : [] }
   function topicChoices(g, pick){ const T = isY11(g) ? TOPICS[g] : HWX[g].topics; return T.map((t, i) => `<option value="${i}"${i === pick ? " selected" : ""}>${esc(t)}</option>`).join("") }
+  const deckBtns = (g, i, lab) => { if (i === null || i === undefined || i < 0) return ""; let I; try { I = hwInfo(g, +i) } catch(e){ return "" } const sl = I && I.slides ? (I.sbase || I.base) : null;
+    return sl ? `<button type="button" data-file="decks/${sl}.pptx" class="sf-go">⬇ ${lab || "PowerPoint"}</button><button type="button" class="view" data-pdf="decks/${sl}.pdf" data-title="Slides · ${esc(I.topic)}">👁 View</button>` : `<span class="tiernote" style="margin:0">No PowerPoint saved for this topic yet</span>` };
+  /* Work the student has sent (with answers) and work in progress */
+  function workSpec(st, t, n){ const g = st.group, i = n - 1;
+    try { if (t === "W"){ const et = etOf(g, i), K = KEYS[g] && KEYS[g][i]; if (!et || !K) return null; return { title: "Exit ticket · " + topicOf(g, i), qs: et.map((q, k) => ({ q: q[0], marks: q[1], key: K[k] })) } }
+      if (t === "H"){ const I = hwInfo(g, i), K = HKEYS[I.base]; if (!I.hw || !K) return null; return { title: "Homework · " + I.topic, qs: I.hw.map((q, k) => ({ q: q[0], marks: q[1], key: K[k] })) } }
+      const P = paperFor({ g, t, i }, st); return P ? { title: P.title, qs: P.questions } : null } catch(e){ return null } }
+  const isDone = (st, t, n) => t === "W" ? Array.isArray((scores[st.id] || {})[n - 1]) : t === "H" ? Array.isArray((hws[st.id] || {})[n - 1]) : Array.isArray((paps[st.id] || {})[t + n]);
+  const myProg = st => progRows.filter(r => r.g === st.group && pnorm(r.who) === pnorm(st.name)).map(r => { const m = r.item.match(/-([WHBPA])(\d+)$/); return m ? { ...r, t: m[1], n: +m[2] } : null }).filter(r => r && !isDone(st, r.t, r.n));
+  const progChip = (st, t, n) => { const r = myProg(st).find(x => x.t === t && x.n === n); return r ? `<span class="sf-no" style="background:#E8F0FF;color:#2A3F8F">✏️ Started: ${r.done}/${r.total} answered</span>` : `<span class="sf-no">⏳ Not started</span>` };
+  const whenTxt = at => { const d = new Date(at); return isNaN(d) ? String(at).slice(0, 16) : d.toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) };
+  function workHtml(st){ const docs = Object.values(ansDocs).filter(d => d.st === st.id).sort((a, b) => String(b.at).localeCompare(String(a.at)));
+    if (!docs.length) return `<p class="tiernote">Nothing yet. When ${esc(st.name)} marks an exit ticket, homework or paper online, their answers appear here.</p>`;
+    return docs.map(d => { const S = workSpec(st, d.t, d.n); let A = []; try { A = JSON.parse(d.a) } catch(e){}
+      if (!S) return `<div class="sf-log"><b>${esc(d.t + d.n)}</b><span>Can't find the questions for this one.</span></div>`;
+      let got = 0, max = 0;
+      const rows = S.qs.map((q, k) => { const ans = A[k] || [], ok = q.key.map((part, j) => { try { return MK.check(part, ans[j] ?? "") } catch(e){ return false } }), nr = ok.filter(Boolean).length, m = Math.floor(q.marks * nr / q.key.length); got += m; max += q.marks;
+        const full = m === q.marks;
+        return `<div class="sf-q ${full ? "ok" : "no"}"><div class="qt"><b>${k + 1}.</b> ${fmt(q.q)} <small>(${m}/${q.marks})</small></div>${q.key.map((part, j) => `<div class="sf-a">${part[2] ? `<i>${esc(part[2])}:</i> ` : ""}<span class="${ok[j] ? "y" : "n"}">${ok[j] ? "✓" : "✗"} ${String(ans[j] ?? "").trim() ? esc(ans[j]) : "<em>(blank)</em>"}</span>${ok[j] ? "" : ` <span class="c">→ ${fmt(MK.shown(part))}</span>`}</div>`).join("")}</div>` }).join("");
+      const wrong = S.qs.filter((q, k) => q.key.some((part, j) => { try { return !MK.check(part, (A[k] || [])[j] ?? "") } catch(e){ return true } })).length;
+      return `<details class="sf-work"><summary><b>${esc(S.title)}</b> <span class="pct ${pctClass(Math.round(100 * got / max))}">${got}/${max}</span> <small>${esc(whenTxt(d.at))} · ${wrong ? wrong + " to check" : "all correct"}</small></summary>${rows}</details>` }).join("") }
   function renderFolder(){
     const st = students.find(x => x.id === fId); if (!st){ fEl.hidden = true; return }
     const col = { y4: "#00B8A9", y7s3: "#FF3D7F", y8s2: "#6C4DFF", y10s1: "#2BB5FF", y10s3: "#FF8A3D", y10s4: "#E0B000", y11s2: "#C2392F", y11s3: "#7A4FD0", y11s4: "#1E8A55", y11fm: "#3B1E8C" }[st.group] || "var(--ink)";
@@ -2356,27 +2420,31 @@ if (TEACHER){
     const avg = a => a.length ? Math.round(a.reduce((x, r) => x + r.pct, 0) / a.length) : null, hwA = avg([...HS.rows, ...PR.filter(r => /^Test/.test(r.title))]), paA = avg(PR.filter(r => !/^Test/.test(r.title)));
     const nl = nextLesson(st), log = myLog(st), cov = new Set(log.filter(e => e.week !== null && e.week !== undefined && (e.s || !shared(st))).map(e => +e.week)); Object.keys(hws[st.id] || {}).forEach(k => cov.add(+k));
     const nxt = planList(st.group).find(i => !cov.has(i)); const nxI = nxt === undefined ? curLessonIdx(st.group) : nxt, nxInfo = nxI >= 0 ? hwInfo(st.group, nxI) : null;
-    const sl = nxInfo && nxInfo.slides ? (nxInfo.sbase || nxInfo.base) : null;
+    const wk = log.find(e => e.week !== null && e.week !== undefined && (e.s || !shared(st))), wkI = wk ? +wk.week : curLessonIdx(st.group);
     const remind = T && !ts ? `Hello, this is Mr Ali from OnMaths 😊\n\nJust a reminder that ${st.name}'s maths homework (${T.title.replace(/^Homework:\s*/, "")}) isn't done yet. It is online and marked straight away:\n\n${tLink(st, T)}\n\nPlease make sure it is completed before our next lesson${nl ? " on " + FDAY[nl.d.getDay()] : ""}.\n\nThank you,\nMr Ali` : "";
     const chip = s => s ? `<span class="pct ${pctClass(s.pct)}">${s.got}/${s.max} · ${s.pct}%</span>` : `<span class="sf-no">⏳ Not done yet</span>`;
     fEl.innerHTML = `<div class="sf-in" style="--sc:${col}">
       <div class="sf-top"><div><div class="sf-eye">📁 Student folder</div><h2>${esc(st.name)}</h2><div class="sf-sub">${esc(gname(st.group))} · 🗓 ${esc(when)}</div></div><button type="button" class="sf-x" data-fclose aria-label="Close">✕</button></div>
       <div class="sf-tiles"><div><b>${doneN}/${TS.length}</b><span>Set homework done</span></div><div><b>${hwA === null ? "–" : hwA + "%"}</b><span>Homework average</span></div><div><b>${paA === null ? "–" : paA + "%"}</b><span>Papers average</span></div><div><b>${log.length}</b><span>Lessons logged</span></div></div>
       <div class="sf-card"><h3>This week</h3>
-        <div class="sf-row"><span class="sf-l">📝 Homework</span><span class="sf-t">${T ? esc(T.title.replace(/^Homework:\s*/, "")) + ` <small>set ${esc(T.d || "")}</small>` : "None set yet"}</span>${T ? chip(ts) : ""}</div>
-        <div class="sf-row"><span class="sf-l">📄 ${P && papKind(P) === "B" ? "Baseline" : "Exam paper"}</span><span class="sf-t">${P ? esc(P.title) + (P.week ? ` <small>${esc(P.week)}</small>` : "") : "None yet"}</span>${P ? chip(ps) : ""}</div>
+        <div class="sf-row"><span class="sf-l">📝 Homework</span><span class="sf-t">${T ? esc(T.title.replace(/^Homework:\s*/, "")) + ` <small>set ${esc(T.d || "")}</small>` : "None set yet"}</span>${T ? (ts ? chip(ts) : progChip(st, "A", T.n)) : ""}</div>
+        <div class="sf-row"><span class="sf-l">📄 ${P && papKind(P) === "B" ? "Baseline" : "Exam paper"}</span><span class="sf-t">${P ? esc(P.title) + (P.week ? ` <small>${esc(P.week)}</small>` : "") : "None yet"}</span>${P ? (ps ? chip(ps) : progChip(st, papKind(P), papNum(P))) : ""}</div>
+        ${(() => { const L = myProg(st).filter(r => !(T && r.t === "A" && r.n === T.n) && !(P && r.t === papKind(P) && r.n === papNum(P))); return L.length ? `<div class="sf-row"><span class="sf-l">✏️ Started</span><span class="sf-t">${L.map(r => `${esc(r.type || r.t)}: ${esc(r.topic)} · <b>${r.done}/${r.total}</b> answered <small>(${esc(whenTxt(r.at))})</small>`).join("<br>")}</span></div>` : "" })()}
+        <div class="sf-row"><span class="sf-l">📊 Lesson</span><span class="sf-t">${wkI >= 0 ? esc(topicOf(st.group, wkI)) + (wk ? ` <small>last lesson · ${esc(niceD(wk.date))}</small>` : ` <small>this week's plan</small>`) : "–"}</span></div>
+        <div class="sf-btns">${deckBtns(st.group, wkI, "This week's PowerPoint")}</div>
         <div class="sf-btns">${remind ? `<a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(remind)}">💬 Remind parent (WhatsApp)</a><button type="button" data-stlink="${esc(remind)}">Copy reminder</button>` : ""}<button type="button" data-stlink="${esc(T ? tLink(st, T) : studentLink(st))}">🔗 Copy ${esc(st.name)}'s link</button><button type="button" data-fimport>🔄 Check for new results</button></div></div>
       <div class="sf-card"><h3>Next lesson</h3>
         <div class="sf-row"><span class="sf-l">🗓 When</span><span class="sf-t">${nl ? `${nl.d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" })}${nl.time ? " · " + esc(nl.time) : ""}` : "Add " + esc(st.name) + " to the timetable"}</span></div>
         <label class="sf-l" for="sfTopic">📘 Topic</label><select id="sfTopic">${topicChoices(st.group, nxI)}</select>
-        <div class="sf-btns" id="sfRes">${sl ? `<button type="button" class="view" data-pdf="decks/${sl}.pdf" data-title="Slides · ${esc(nxInfo.topic)}">👁 Slides</button><button type="button" data-file="decks/${sl}.pptx">⬇ PowerPoint</button>` : ""}</div>
+        <div class="sf-btns" id="sfRes">${deckBtns(st.group, nxI)}</div>
         <label class="sf-l" for="sfNote">After the lesson: notes (optional)</label><input id="sfNote" type="text" maxlength="200" placeholder="e.g. Good on area, needs practice with radius vs diameter">
         <div class="sf-btns"><button type="button" data-flog class="sf-go">✓ Mark this topic as covered today</button></div><p class="tiernote" id="sfMsg" style="margin:4px 0 0"></p></div>
       <div class="sf-card sethw"><h3>Set homework</h3><span class="tiernote" style="margin:0">Pick a topic. ${esc(st.name)} does it online and it's marked straight away, with its video.</span>
         <select id="shwTopic">${hwTopicOptions(st.group)}</select><button type="button" id="shwGo" class="sf-go">Set homework</button><div id="shwOut"></div></div>
+      <div class="sf-card"><h3>Their work: answers to check</h3><span class="tiernote" style="margin:0">Tap one to see each question, what ${esc(st.name)} typed (✓ or ✗) and the correct answer.</span>${workHtml(st)}</div>
       <div class="sf-card"><h3>Progress</h3>${all.length ? `<div class="sf-prog">${all.map(r => `<div class="sf-pr"><span class="sf-k">${esc(r.k)}</span><span class="sf-pt">${esc(r.t)}</span><span class="sf-bar"><i class="${pctClass(r.pct)}" style="width:${Math.max(4, r.pct)}%"></i></span><b>${r.pct}%</b></div>`).join("")}</div>` : `<p class="tiernote">No results yet. They appear here when ${esc(st.name)} does homework or a paper online.</p>`}
         ${TS.length > 1 ? `<h4>Homework set</h4>${TS.map(t => `<div class="sf-row"><span class="sf-t">${esc(t.title.replace(/^Homework:\s*/, ""))} <small>${esc(t.d || "")}</small></span>${chip(tScore(st, t))}</div>`).join("")}` : ""}</div>
-      <div class="sf-card"><h3>What we've covered</h3>${log.length ? log.map(e => `<div class="sf-log"><b>${esc(niceD(e.date))}</b><span>${esc(e.topic)}${!e.s && shared(st) ? ` <small>(${esc(gname(e.group))} log)</small>` : ""}${e.notes ? `<em>${esc(e.notes)}</em>` : ""}</span></div>`).join("") : `<p class="tiernote">Nothing logged yet. Use “Mark this topic as covered” after each lesson.</p>`}</div>
+      <div class="sf-card"><h3>What we've covered</h3>${log.length ? log.map(e => `<div class="sf-log"><b>${esc(niceD(e.date))}</b><span>${esc(e.topic)}${!e.s && shared(st) ? ` <small>(${esc(gname(e.group))} log)</small>` : ""}${e.notes ? `<em>${esc(e.notes)}</em>` : ""}${e.week !== null && e.week !== undefined ? `<span class="sf-btns" style="margin-top:4px">${deckBtns(e.group, e.week)}</span>` : ""}</span></div>`).join("") : `<p class="tiernote">Nothing logged yet. Use “Mark this topic as covered” after each lesson.</p>`}</div>
       <p class="sf-btns"><button type="button" data-ftrk>Enter marks or make a parent report</button><button type="button" data-fclose>Close folder</button></p></div>`;
   }
   async function loadFolderData(){ if (!db) return; try { const [a, b] = await Promise.all([db.doc("tracker/timetable").get(), db.collection("taught").get()]); fSlots = a.exists ? JSON.parse(JSON.stringify(a.data().slots || [])) : []; fLog = b.docs.map(d => ({ id: d.id, ...JSON.parse(JSON.stringify(d.data())) })) } catch(e){} }
@@ -2394,7 +2462,7 @@ if (TEACHER){
       try { await db.collection("taught").add(doc); await loadFolderData(); renderFolder(); fEl.querySelector("#sfMsg").textContent = `✓ Logged: ${doc.topic}.` } catch(err){ msg.textContent = "Couldn't save. Check your connection." } return }
     { const lb = e.target.closest("[data-stlink]"); if (lb){ try { navigator.clipboard.writeText(lb.dataset.stlink).then(() => toast("Copied."), () => toast("Press and hold to copy.")) } catch(err){ toast("Press and hold to copy.") } } } });
   fEl.addEventListener("change", e => { if (e.target.id !== "sfTopic") return; const st = students.find(x => x.id === fId), I = hwInfo(st.group, +e.target.value), sl = I.slides ? (I.sbase || I.base) : null;
-    fEl.querySelector("#sfRes").innerHTML = sl ? `<button type="button" class="view" data-pdf="decks/${sl}.pdf" data-title="Slides · ${esc(I.topic)}">👁 Slides</button><button type="button" data-file="decks/${sl}.pptx">⬇ PowerPoint</button>` : "" });
+    fEl.querySelector("#sfRes").innerHTML = deckBtns(st.group, +e.target.value) });
   const saveTimers = {};
   async function saveScores(id){
     try { await db.doc("scores/" + id).set({ weeks: scores[id] || {}, hw: hws[id] || {}, pap: paps[id] || {} }); status.textContent = "Saved." }
@@ -2447,7 +2515,7 @@ if (TEACHER){
     if (!mcp){ if (!auto) status.textContent = "Google Sheets can't be reached from this view. Open the teacher site in claude.ai, or paste codes instead."; return }
     btn.disabled = true; status.textContent = "Getting students' results…"; let rows;
     try { const qs = await db.collection("papers").get(); qs.docs.forEach(d => { const P = JSON.parse(JSON.stringify(d.data())); if (Array.isArray(P.questions) && P.questions.every(q => Array.isArray(q.key)) && !papById(d.id)) OPAPERS.push({ id: d.id, ...P }) }) } catch(e){}
-    try { const r = await mcp.callTool("Google Sheets", "get_values", { spreadsheetId: RESULTS_SHEET, range: "Sheet1!A2:H5000" }); const pl = (r && (r.payload || r.structuredContent)) || {}; rows = Array.isArray(pl.values) ? pl.values : [] }
+    try { const r = await mcp.callTool("Google Sheets", "get_values", { spreadsheetId: RESULTS_SHEET, range: "Sheet1!A2:I5000" }); const pl = (r && (r.payload || r.structuredContent)) || {}; rows = Array.isArray(pl.values) ? pl.values : [] }
     catch(e){ btn.disabled = false; const c = e && e.code;
       status.textContent = c === "needs_reauth" ? "Google Sheets needs reconnecting in claude.ai (Connectors), then press the button again."
         : c === "server_not_connected" ? "Connect Google Sheets in claude.ai (Connectors), then press the button again."
@@ -2460,8 +2528,12 @@ if (TEACHER){
       const cands = students.filter(x => x.group === c.g), w = norm(who);
       const st = cands.find(x => norm(x.name) === w) || (w.length >= 3 ? cands.find(x => norm(x.name).startsWith(w) || w.startsWith(norm(x.name))) : null) || (cands.length === 1 ? cands[0] : null);
       if (!st){ unmatched.add(`${String(who || "No name").slice(0, 40)} (${gname(c.g)})`); continue }
+      if (r[8]){ const id = `${st.id}_${c.t}${c.i + 1}`, cur = ansDocs[id], doc = { st: st.id, t: c.t, n: c.i + 1, g: c.g, code: String(r[7]).toUpperCase(), at: String(r[0] || ""), a: String(r[8]) };
+        if (!cur || cur.a !== doc.a || cur.code !== doc.code){ ansDocs[id] = doc; try { await db.doc("answers/" + id).set(doc) } catch(e){} } }
       const R = await applyCode(c, st); if (R.err || R.same) continue; changed.add(st.id); n++;
     }
+    try { const pr = await mcp.callTool("Google Sheets", "get_values", { spreadsheetId: RESULTS_SHEET, range: "Progress!A2:H2000" }); const pp = (pr && (pr.payload || pr.structuredContent)) || {};
+      if (Array.isArray(pp.values)){ progRows = pp.values.map(x => ({ at: String(x[0] || ""), who: String(x[1] || ""), g: String(x[2] || ""), item: String(x[3] || "").toUpperCase(), done: +x[4] || 0, total: +x[5] || 0, type: String(x[6] || ""), topic: String(x[7] || "") })); try { await db.doc("tracker/progress").set({ rows: progRows }) } catch(e){} } } catch(e){}
     renderPills(); renderOverview(); renderPanel();
     for (const id of changed) await saveScores(id);
     btn.disabled = false;
@@ -2484,6 +2556,8 @@ if (TEACHER){
       const clone = o => JSON.parse(JSON.stringify(o || null));
       students = sd.exists ? (clone(sd.data().list) || []) : [];
       qs.docs.forEach(d => { scores[d.id] = clone(d.data().weeks) || {}; hws[d.id] = clone(d.data().hw) || {}; paps[d.id] = clone(d.data().pap) || {} });
+      try { const aq = await db.collection("answers").get(); aq.docs.forEach(d => { ansDocs[d.id] = JSON.parse(JSON.stringify(d.data())) }) } catch(e){}
+      try { const pd = await db.doc("tracker/progress").get(); if (pd.exists) progRows = JSON.parse(JSON.stringify(pd.data().rows || [])) } catch(e){}
       try { const tq = await db.collection("tests").get(); tq.docs.forEach(d => addTest(JSON.parse(JSON.stringify(d.data())))) } catch(e){}
       try { const pq = await db.collection("papers").get(); pq.docs.forEach(d => { const P = JSON.parse(JSON.stringify(d.data())); if (Array.isArray(P.questions) && P.questions.every(q => Array.isArray(q.key)) && !papById(d.id)) OPAPERS.push({ id: d.id, ...P }) }); if (hwGroup) renderPapers(hwGroup) } catch(e){}
       renderPills(); renderOverview(); renderPanel();
