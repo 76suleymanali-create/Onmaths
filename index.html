@@ -2131,8 +2131,8 @@ function y11PaperHomework(){
   {  go.textContent = "👉 Press here to do your exam paper homework"; paplist.prepend(go); hwlist.querySelectorAll(".hw-go-now").forEach(x => x.remove()); go.onclick = () => { first.open = true; first.scrollIntoView({ behavior: "smooth", block: "start" }); const f = first.querySelector(".hwform input"); if (f) setTimeout(() => f.focus({ preventScroll: true }), 400) } }
 }
 { const rh = renderHw; renderHw = gid => { rh(gid); renderPapers(gid) } }
-if (!TEACHER) fetch("tests.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : []).then(L => { if (!Array.isArray(L)) return; L.forEach(T => { if (T && T.g && T.n && Array.isArray(T.r) && T.r.every(r => resolveRef(r))) addTest({ g: T.g, n: T.n, title: T.title, r: T.r, d: T.d, c: T.c, s: T.s, w: T.w }) }); if (hwGroup){ renderPapers(hwGroup); renderVideo(hwGroup) } }).catch(() => {});
-fetch("papers.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : []).then(L => { if (!Array.isArray(L)) return; L.forEach(P => { if (P && P.id && !papById(P.id)) OPAPERS.push(P) }); if (hwGroup) renderPapers(hwGroup) }).catch(() => {});
+const PAPERS_READY = fetch("papers.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : []).then(L => { if (!Array.isArray(L)) return; L.forEach(P => { if (P && P.id && !papById(P.id)) OPAPERS.push(P) }); if (hwGroup) renderPapers(hwGroup) }).catch(() => {});
+if (!TEACHER) PAPERS_READY.then(() => fetch("tests.json", { cache: "no-cache" })).then(r => r.ok ? r.json() : []).then(L => { if (!Array.isArray(L)) return; L.forEach(T => { if (T && T.g && T.n && Array.isArray(T.r) && T.r.every(r => resolveRef(r))) addTest({ g: T.g, n: T.n, title: T.title, r: T.r, d: T.d, c: T.c, s: T.s, w: T.w }) }); if (hwGroup){ renderPapers(hwGroup); renderVideo(hwGroup) } }).catch(() => {});
 /* ===== My group ===== */
 const groupPills = document.getElementById("groupPills");
 groupPills.innerHTML = HWGROUPS.map(([id, n]) => `<button type="button" id="mg-${id}" data-id="${id}" aria-pressed="false">${n}</button>`).join("");
