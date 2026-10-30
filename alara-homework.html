@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Alara's homework · OnMaths</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap">
+<style>
+:root{--bg:#f3f6f4;--surface:#fff;--ink:#14231d;--muted:#5b6c64;--line:#d6e0db;--pitch:#1d6b4c;--pitch-soft:#e2f0e9;--lane:#2f5bd3;--good:#1f8a52;--warn:#c9541d;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;--body:"Nunito Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1714;--surface:#17221d;--ink:#e7f0eb;--muted:#9db0a7;--line:#2a3a33;--pitch:#5cc796;--pitch-soft:#1c3329;--lane:#86a5ff;--good:#5cc796;--warn:#f08a5a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1714;--surface:#17221d;--ink:#e7f0eb;--muted:#9db0a7;--line:#2a3a33;--pitch:#5cc796;--pitch-soft:#1c3329;--lane:#86a5ff;--good:#5cc796;--warn:#f08a5a;color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+.wrap{max-width:640px;margin:0 auto;padding:20px 16px 48px;display:flex;flex-direction:column;gap:16px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+h1{font-family:var(--display);font-size:40px;line-height:1;margin:4px 0 0}
+h2{font-family:var(--display);font-size:24px;margin:8px 0 0}
+a{color:var(--lane)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.qh{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.qn{font-family:var(--display);font-size:22px;color:var(--pitch)}
+.mk{font-size:13px;color:var(--muted);font-weight:700;white-space:nowrap}
+.q{font-weight:600}
+label{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted)}
+input{font:inherit;font-size:18px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%;box-sizing:border-box}
+input:focus-visible,button:focus-visible{outline:3px solid var(--lane);outline-offset:2px}
+.res{font-weight:700;font-size:15px}.res.ok{color:var(--good)}.res.no{color:var(--warn)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+button{font:inherit;font-weight:700;border-radius:10px;padding:12px 18px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;flex:1 1 auto}
+button.primary{background:var(--pitch);border-color:var(--pitch);color:var(--surface)}
+.big{font-family:var(--display);font-size:56px;line-height:1;color:var(--pitch)}
+.note{font-size:14px;color:var(--muted)}
+</style></head>
+<body><div class="wrap">
+<div><div class="eyebrow">OnMaths · Alara · Year 10</div><h1 id="title">Homework</h1>
+<p class="note">Write your working on paper, then type your final answers here. Section A (questions 1–5) is without a calculator. Your answers save on this phone as you type.</p></div>
+<div id="qs"></div>
+<div class="card" id="endCard">
+  <div class="row"><button class="primary" id="markBtn" type="button">Mark and send to Mr Ali</button></div>
+  <div id="score" hidden><div class="big" id="scoreNum"></div><p class="note" id="scoreMsg"></p></div>
+  <p class="note" id="sendNote"></p>
+</div>
+<p class="note"><a href="alara.html">← Back to Alara's page</a></p>
+</div>
+<script>
+const SUBMIT_URL = "https://script.google.com/macros/s/AKfycbyhSzx1_q1cwwXfr2-6Ru4yMl-RM3NzKA3nElTYMwo-zmfZX7IL06pVYAw8AlMhYy1h/exec";
+const HW_ID = new URLSearchParams(location.search).get("hw") || "Y10-Alara-HW-Percentages";
+const KEY = "alara-hw-" + HW_ID;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const ckLetter = s => { let h = 7; for (const c of "OnMaths|" + s) h = (h * 31 + c.charCodeAt(0)) % 9973; return "ABCDEFGHJKMNPQRSTUVWXYZ"[h % 23]; };
+const num = raw => { const s = String(raw).toLowerCase().replace(/£|%|kg|,|\s/g, ""); return /^-?\d*\.?\d+$/.test(s) ? parseFloat(s) : NaN };
+const right = (k, raw) => { if (raw == null || !String(raw).trim()) return false;
+  if (k[0] === "num") return Math.abs(num(raw) - k[1]) < 0.001;
+  if (k[0] === "s") return k[1].some(a => a.toLowerCase().replace(/\s+/g, "") === String(raw).toLowerCase().replace(/\s+/g, ""));
+  return false };
+let HW = null, saved = {};
+try { saved = JSON.parse(localStorage.getItem(KEY)) || {} } catch(e){}
+const store = () => { try { localStorage.setItem(KEY, JSON.stringify(saved)) } catch(e){} };
+
+fetch("alara-hw.json", { cache: "no-cache" }).then(r => r.json()).then(L => {
+  HW = L.find(x => x.id === HW_ID); if (!HW) return;
+  document.getElementById("title").textContent = HW.title;
+  const total = HW.questions.reduce((a, q) => a + q.marks, 0);
+  let sec = "";
+  document.getElementById("qs").innerHTML = HW.questions.map((q, i) => {
+    const s = i < 5 ? "Section A – no calculator" : i < 11 ? "Section B – calculator" : "Section C – reverse percentages and problem solving";
+    const head = s !== sec ? `<h2>${s}</h2>` : ""; sec = s;
+    return `${head}<div class="card" id="q${i}"><div class="qh"><span class="qn">${i + 1}</span><span class="mk">${q.marks} mark${q.marks > 1 ? "s" : ""}</span></div>
+      <div class="q">${esc(q.q.replace(" (No calculator)", ""))}</div>
+      ${q.key.map((k, j) => `<label>${esc(k[2] || "Answer")}<input inputmode="${k[0] === "num" ? "decimal" : "text"}" autocomplete="off" data-q="${i}" data-p="${j}" value="${esc((saved.a && saved.a[i] && saved.a[i][j]) || "")}"></label>`).join("")}
+      <div class="res" aria-live="polite"></div></div>`;
+  }).join("");
+  document.getElementById("qs").addEventListener("input", e => { const t = e.target; if (!t.dataset.q) return; saved.a = saved.a || []; (saved.a[t.dataset.q] = saved.a[t.dataset.q] || [])[t.dataset.p] = t.value; store() });
+  document.getElementById("markBtn").textContent = `Mark and send to Mr Ali (out of ${total})`;
+  if (saved.done) mark(false);
+});
+
+function mark(send){
+  const A = HW.questions.map((q, i) => q.key.map((k, j) => document.querySelector(`input[data-q="${i}"][data-p="${j}"]`).value.trim()));
+  const marks = HW.questions.map((q, i) => { const c = q.key.filter((k, j) => right(k, A[i][j])).length; return c === q.key.length ? q.marks : Math.floor(q.marks * c / q.key.length) });
+  HW.questions.forEach((q, i) => { const r = document.querySelector(`#q${i} .res`), m = marks[i];
+    r.className = "res " + (m === q.marks ? "ok" : "no"); r.textContent = m === q.marks ? `✓ Correct · ${m}/${q.marks}` : `✗ ${m}/${q.marks} – check your working`; });
+  const got = marks.reduce((a, b) => a + b, 0), total = HW.questions.reduce((a, q) => a + q.marks, 0);
+  document.getElementById("score").hidden = false;
+  document.getElementById("scoreNum").textContent = `${got} / ${total}`;
+  document.getElementById("scoreMsg").textContent = got === total ? "Brilliant, full marks!" : "Look at the ✗ questions, find your mistake and try them again. Mr Ali may give extra marks for your working.";
+  saved.done = 1; store();
+  if (!send) { document.getElementById("sendNote").textContent = saved.sent ? "✓ Sent to Mr Ali." : ""; return }
+  const base = `Y10S4-A${HW.n || 50}-${marks.join("")}`, code = base + "-" + ckLetter(base);
+  const body = JSON.stringify({ student: "Alara", group: "y10s4", type: "Homework", week: HW.n || 50, topic: HW.title, score: `${got}/${total}`, code, answers: JSON.stringify(A).slice(0, 40000) });
+  const note = document.getElementById("sendNote"); note.textContent = "Sending to Mr Ali…";
+  fetch(SUBMIT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body })
+    .then(() => { saved.sent = 1; store(); note.textContent = "✓ Sent to Mr Ali. You can fix any ✗ answers and press the button again." },
+          () => { note.textContent = "Couldn't send – check your internet and press the button again." });
+}
+document.getElementById("markBtn").addEventListener("click", () => HW && mark(true));
+</script>
+</body></html>

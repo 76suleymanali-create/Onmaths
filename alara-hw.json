@@ -1,0 +1,218 @@
+[
+ {
+  "id": "Y10-Alara-HW-Percentages",
+  "title": "Homework: Percentages",
+  "student": "Alara",
+  "group": "y10s4",
+  "week": "w/c 26 Oct 2026",
+  "calc": true,
+  "questions": [
+   {
+    "q": "Find 10% of £350. (No calculator)",
+    "marks": 1,
+    "topic": "Percentage of an amount",
+    "key": [
+     [
+      "num",
+      35,
+      "£"
+     ]
+    ]
+   },
+   {
+    "q": "Find 15% of £240. (No calculator)",
+    "marks": 2,
+    "topic": "Percentage of an amount",
+    "key": [
+     [
+      "num",
+      36,
+      "£"
+     ]
+    ]
+   },
+   {
+    "q": "Find 45% of 120. (No calculator)",
+    "marks": 2,
+    "topic": "Percentage of an amount",
+    "key": [
+     [
+      "num",
+      54
+     ]
+    ]
+   },
+   {
+    "q": "(a) Write 0.6 as a percentage. (b) Write 7% as a decimal.",
+    "marks": 2,
+    "topic": "Fractions, decimals and percentages",
+    "key": [
+     [
+      "num",
+      60,
+      "(a) %"
+     ],
+     [
+      "num",
+      0.07,
+      "(b) decimal"
+     ]
+    ]
+   },
+   {
+    "q": "Find 4% of 450. (No calculator)",
+    "marks": 1,
+    "topic": "Percentage of an amount",
+    "key": [
+     [
+      "num",
+      18
+     ]
+    ]
+   },
+   {
+    "q": "Increase £65 by 18%.",
+    "marks": 2,
+    "topic": "Percentage increase and decrease",
+    "key": [
+     [
+      "num",
+      76.7,
+      "£"
+     ]
+    ]
+   },
+   {
+    "q": "Decrease 480 kg by 12.5%.",
+    "marks": 2,
+    "topic": "Percentage increase and decrease",
+    "key": [
+     [
+      "num",
+      420,
+      "kg"
+     ]
+    ]
+   },
+   {
+    "q": "A laptop costs £550. In a sale it is reduced by 22%. Work out the sale price.",
+    "marks": 2,
+    "topic": "Percentage increase and decrease",
+    "key": [
+     [
+      "num",
+      429,
+      "£"
+     ]
+    ]
+   },
+   {
+    "q": "The price of a ticket rises from £36 to £45. Work out the percentage increase.",
+    "marks": 2,
+    "topic": "Percentage change",
+    "key": [
+     [
+      "num",
+      25,
+      "%"
+     ]
+    ]
+   },
+   {
+    "q": "A town's population falls from 12 500 to 11 750. Work out the percentage decrease.",
+    "marks": 2,
+    "topic": "Percentage change",
+    "key": [
+     [
+      "num",
+      6,
+      "%"
+     ]
+    ]
+   },
+   {
+    "q": "Ben buys a bike for £60 and sells it for £45. Work out his percentage loss.",
+    "marks": 2,
+    "topic": "Percentage change",
+    "key": [
+     [
+      "num",
+      25,
+      "%"
+     ]
+    ]
+   },
+   {
+    "q": "In a sale, trainers are reduced by 30%. The sale price is £63. Work out the original price.",
+    "marks": 3,
+    "topic": "Reverse percentages",
+    "key": [
+     [
+      "num",
+      90,
+      "£"
+     ]
+    ]
+   },
+   {
+    "q": "After a 5% pay rise, Mia earns £24 150 a year. Work out her pay before the rise.",
+    "marks": 3,
+    "topic": "Reverse percentages",
+    "key": [
+     [
+      "num",
+      23000,
+      "£"
+     ]
+    ]
+   },
+   {
+    "q": "A washing machine costs £318 including VAT at 20%. Work out the price before VAT.",
+    "marks": 3,
+    "topic": "Reverse percentages",
+    "key": [
+     [
+      "num",
+      265,
+      "£"
+     ]
+    ]
+   },
+   {
+    "q": "Two deals for the same phone. Deal A: £480 with 15% off. Deal B: £35 a month for 12 months, with 10% off the total. Which deal is cheaper, and by how much?",
+    "marks": 4,
+    "topic": "Percentage problem solving",
+    "key": [
+     [
+      "s",
+      [
+       "B",
+       "Deal B",
+       "b",
+       "deal b",
+       "DEAL B"
+      ],
+      "Cheaper deal (A or B)"
+     ],
+     [
+      "num",
+      30,
+      "Cheaper by £"
+     ]
+    ]
+   },
+   {
+    "q": "Tom says: \"If you increase a price by 10% and then decrease it by 10%, you get back to the original price.\" Start with £200. What is the final price?",
+    "marks": 2,
+    "topic": "Percentage problem solving",
+    "key": [
+     [
+      "num",
+      198,
+      "Final price £"
+     ]
+    ]
+   }
+  ]
+ }
+]
