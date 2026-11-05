@@ -80,6 +80,7 @@ header nav a:hover{background:color-mix(in srgb,var(--band-ink) 15%,transparent)
 .pdfpages{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px max(12px,env(safe-area-inset-right,0px)) 40px max(12px,env(safe-area-inset-left,0px));display:grid;gap:12px;align-content:start;justify-items:center}
 .pdfimg{width:100%;max-width:1000px;height:auto;display:block}
 .pdfpages canvas{width:100%;max-width:1000px;height:auto;background:#fff;border-radius:6px;box-shadow:0 2px 10px rgba(30,18,64,.18)}
+.rvf{margin:0;width:100%;max-width:1000px;display:grid;gap:8px;justify-items:center}.rvb{font:700 1rem var(--body);border:2px solid var(--ink);border-radius:999px;padding:10px 18px;background:var(--hi);color:var(--hi-ink);cursor:pointer}
 .pdfmsg{color:var(--ink-soft);font-weight:700;padding:30px 8px;text-align:center}
 .modebadge{background:var(--hi);color:var(--hi-ink)!important;font:700 .7rem var(--body)!important;padding:2px 8px;border-radius:999px;letter-spacing:.06em;text-transform:uppercase}
 .mygroup{padding-block:18px;background:var(--card);border-bottom:2px solid var(--line)}
@@ -2168,8 +2169,16 @@ const pdfv = document.getElementById("pdfv"), pdfPages = document.getElementById
 let pdfPath = "";
 /* Updated slide previews (fuller I do steps) are served from decks/img */
 ["Y11-Set2-Higher-L1-Simultaneous-equations", "Y11-Set2-Higher-L2-Quadratics-factorising-solving", "Y11-Set2-Higher-L3-Compound-interest-depreciation-reverse-percentages", "Y11-Set2-Higher-L4-Trigonometry", "Y11-Set2-Higher-L5-Arcs-sectors-volume", "Y11-Set2-Higher-L6-Probability-tree-diagrams", "Y11-Set2-Higher-L7-Direct-inverse-proportion", "Y11-Set2-Higher-L8-Indices-standard-form", "Y11-Set4-Foundation-L1-Percentage-change-reverse-percentages", "Y11-Set4-Foundation-L2-Ratio-problems", "Y11-Set4-Foundation-L3-Solving-linear-equations", "Y11-Set4-Foundation-L4-Area-perimeter-including-circles", "Y11-Set4-Foundation-L5-Pythagoras-theorem", "Y11-Set4-Foundation-L6-Probability", "Y11-Set4-Foundation-L7-Straight-line-graphs", "Y11-Set4-Foundation-L8-Fractions"].forEach(k => delete IMGS[k]);
+const REV={"Y11-Set4-Foundation-L21-Bearings-15min":[0,1,1,1,1,1,1,1,1,1,1],"Y10-Set3-Toby-L10-Types-of-graph":[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]}, REVDIR="files/rev";
+function openRev(key, title){
+  pdfPages.innerHTML = `<p class="pdfmsg" style="padding:6px">Tap “Show answers” under a slide to check your work.</p>` + REV[key].map((h, j) => { const n = j + 1;
+    return `<figure class="rvf"><img class="pdfimg" loading="lazy" alt="${esc(title)} slide ${n}" src="${REVDIR}/${key}-q${n}.jpg">${h ? `<button type="button" class="rvb" data-k="${key}" data-n="${n}">👁 Show answers</button>` : ""}</figure>` }).join("");
+}
+document.addEventListener("click", e => { const b = e.target.closest(".rvb"); if (!b) return; const im = b.parentNode.querySelector("img"), on = b.dataset.on === "1";
+  im.src = `${REVDIR}/${b.dataset.k}-${on ? "q" : "a"}${b.dataset.n}.jpg`; b.dataset.on = on ? "0" : "1"; b.textContent = on ? "👁 Show answers" : "↺ Hide answers" });
 function openPdf(path, title){
   pdfPath = path;
+  { const k0 = path.replace(/^decks\//, "").replace(/\.pdf$/, ""); if (REV[k0]){ document.getElementById("pdfTitle").textContent = title; document.getElementById("pdfDl").textContent = isSlides(path) ? "⬇ PowerPoint" : "⬇ Download"; openRev(k0, title); pdfv.hidden = false; pdfv.scrollTop = 0; pdfPages.scrollTop = 0; document.body.style.overflow = "hidden"; document.getElementById("pdfClose").focus(); return } }
   document.getElementById("pdfTitle").textContent = title;
   document.getElementById("pdfDl").textContent = isSlides(path) ? "⬇ PowerPoint" : "⬇ Download";
   const key = path.replace(/^decks\//, "").replace(/\.pdf$/, ""), img = IMGS[key] || path.replace(/^decks\//, "decks/img/").replace(/\.pdf$/, ".jpg");
