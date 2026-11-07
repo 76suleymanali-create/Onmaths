@@ -1865,7 +1865,7 @@ const borrowLater = () => { for (const [g, W] of Object.entries(BORROW)){ if (!H
   HWX[g].weeks[i] = { mg: S.prac, hw: S.hw }; HWXB[g][i] = S.base; const et = etOf(sg, si); if (et){ ETX[g][i] = et; KEYS[g][i] = KEYS[sg] && KEYS[sg][si] } const vb = lessonBase(sg, si) || VIDKEY[sg + "|" + si]; if (vb) VIDKEY[g + "|" + i] = vb } } };
 const vidBase = (g, i) => { const b = lessonBase(g, i); return (b && VIDEOS[b]) ? b : (VIDKEY[g + "|" + i] || b || null) };
 /* Which homework each teaching week uses (week k = SOW_D[k]); changes automatically every Monday */
-const WEEKPLAN = { y4: [0,32,33,34,35,36,37,38,39], y7s3: [0,32,33,34,35,36,37,38,39], y8s2: [0,24,1,2,3,4,5,6,7], y10s1: [0,1,2,3,4,5,6,7], y10s3: [0,1,2,3,4,5,6,7], y10s4: [0,24,1,2,3,4,5,6,7,14] };
+const WEEKPLAN = { y4: [0,1,34,35,4,5,6,7,8,9,36,11], y7s3: [0,32,33,34,35,36,37,38,39], y8s2: [0,24,1,2,3,4,5,6,7], y10s1: [0,1,2,3,4,5,6,7], y10s3: [0,1,2,3,4,5,6,7], y10s4: [0,24,1,2,3,4,5,6,7,14] };
 function curLessonIdx(g){ if (Y11G(g)) return CUR; if (WEEKPLAN[g]) return SCUR < WEEKPLAN[g].length ? WEEKPLAN[g][SCUR] : -1; if (isSch(g)) return SCUR; const L = libOf(g)[0]; if (L) return L.i; const B = bankOf(g); return B.length ? B[0] : -1 }
 function videoOf(g, i){ const b = vidBase(g, i); return b && VIDEOS[b] ? { src: VIDEOS[b], poster: VPOST[b] || "", topic: topicOf(g, i) } : null }
 function renderVideo(g){
@@ -2985,6 +2985,9 @@ async function reportPdf(R){
     const u = URL.createObjectURL(blob), a = document.createElement("a"); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); toast("Downloading " + name);
   } catch(err){ if (!err || err.code !== "declined") toast("Couldn't download. Open the link in Safari or Chrome and try again.") }
 }
+/* Year 4 week 2 (w/c 2 Nov): Area lesson homework and exit ticket */
+try { TUTOR["y4|1"] = {"topic": "Area of rectilinear shapes by counting squares", "mg": "Area counting squares", "hw": [["A rectangle is 5 squares long and 2 squares wide. What is its area?", 1, "10 squares"], ["A shape on squared paper has rows of 3, 3 and 6 squares. What is its area?", 1, "3 + 3 + 6 = 12 squares"], ["A shape has 8 whole squares and 4 half squares. What is its area?", 2, "4 halves = 2 wholes (1). 8 + 2 = 10 squares (1)"], ["Which has the bigger area: a 5 by 3 rectangle or a 4 by 4 square?", 2, "5 × 3 = 15 and 4 × 4 = 16 (1). The 4 by 4 square (1)"], ["A 5 by 4 rectangle of squares has a 2 by 1 piece cut from one corner. What is its area?", 2, "5 × 4 = 20 (1). 20 − 2 = 18 squares (1)"]], "et": [["A rectangle is 6 squares by 3 squares. What is its area?", 1, "18 squares"], ["A shape has 7 whole squares and 2 half squares. What is its area?", 1, "7 + 1 = 8 squares"], ["A 4 by 2 rectangle of squares is joined to a 2 by 2 square. What is the area of the whole shape?", 2, "8 (1) + 4 = 12 squares (1)"]], "hwb": "Y4-HW2-Area-of-rectilinear-shapes", "key": [[["num", 18, "Squares"]], [["num", 8, "Squares"]], [["num", 12, "Squares"]]], "obj": ["Find the area of a shape by counting squares", "Find and compare the area of rectilinear shapes"]}; HKEYS["Y4-HW2-Area-of-rectilinear-shapes"] = [[["num", 10, "Squares"]], [["num", 12, "Squares"]], [["num", 10, "Squares"]], [["mc", "The 4 by 4 square", "Choose", ["The 5 by 3 rectangle", "The 4 by 4 square", "Same"]]], [["num", 18, "Squares"]]];
+  Object.assign(TUTOR_ASSETS.student.img, {"Y4-HW2-Area-of-rectilinear-shapes-Homework-Student": "files/Y4-HW2-Area-of-rectilinear-shapes-Homework-Student.jpg"}); Object.assign(TUTOR_ASSETS.student.pdf, {"Y4-HW2-Area-of-rectilinear-shapes-Homework-Student.pdf": "files/Y4-HW2-Area-of-rectilinear-shapes-Homework-Student.pdf"}); } catch(e){ console.error(e) }
 try { tutorApply() } catch(e){ console.error(e) }
 /* ===== Year 4: new numbers every time a homework or exit ticket is tried again ===== */
 const Y4GEN = (() => {
@@ -3011,6 +3014,17 @@ const Y4GEN = (() => {
     () => { const [a, b] = sum4(); return [`Work out ${f(a)} + ${f(b)}`, 1, f(a + b), N(a + b)] },
     () => { const [a, b] = subEx(); return [`Work out ${f(a)} − ${f(b)}`, 1, f(a - b), N(a - b)] },
     () => { const a = ri(30, 50) * 100 + ri(0, 9) * 10, b = ri(1000, 2000) + ri(1, 9) * 5; return [`A farm has ${f(a)} sheep. It sells ${f(b)}. How many sheep are left?`, 2, `${f(a)} − ${f(b)} (1) = ${f(a - b)} (1)`, N(a - b)] }] };
+  T[1] = { hw: [
+    () => { const a = ri(3, 9), b = ri(2, 6); return [`A rectangle is ${a} squares long and ${b} squares wide. What is its area?`, 1, `${a * b} squares`, [["num", a * b, "Squares"]]] },
+    () => { const r = [ri(2, 6), ri(2, 6), ri(2, 7)]; return [`A shape on squared paper has rows of ${r[0]}, ${r[1]} and ${r[2]} squares. What is its area?`, 1, `${r.join(" + ")} = ${r[0] + r[1] + r[2]} squares`, [["num", r[0] + r[1] + r[2], "Squares"]]] },
+    () => { const w = ri(5, 12), h = 2 * ri(1, 4); return [`A shape has ${w} whole squares and ${h} half squares. What is its area?`, 2, `${h} halves = ${h / 2} wholes (1). ${w} + ${h / 2} = ${w + h / 2} squares (1)`, [["num", w + h / 2, "Squares"]]] },
+    () => { let a, b, s; do { a = ri(2, 4); b = ri(5, 9); s = ri(3, 6) } while (a * b === s * s); const big = a * b > s * s ? `The ${a} by ${b} rectangle` : `The ${s} by ${s} square`;
+      return [`Which has the bigger area: a ${a} by ${b} rectangle or a ${s} by ${s} square?`, 2, `${a} × ${b} = ${a * b} and ${s} × ${s} = ${s * s} (1). ${big} (1)`, [["mc", big, "Choose", [`The ${a} by ${b} rectangle`, `The ${s} by ${s} square`, "Same"]]]] },
+    () => { const a = ri(4, 7), b = ri(3, 5), c = ri(1, 2), d = ri(1, 2); return [`A ${a} by ${b} rectangle of squares has a ${c} by ${d} piece cut from one corner. What is its area?`, 2, `${a} × ${b} = ${a * b} (1). ${a * b} − ${c * d} = ${a * b - c * d} squares (1)`, [["num", a * b - c * d, "Squares"]]] }],
+    et: [
+    () => { const a = ri(3, 9), b = ri(2, 6); return [`A rectangle is ${a} squares by ${b} squares. What is its area?`, 1, `${a * b} squares`, [["num", a * b, "Squares"]]] },
+    () => { const w = ri(4, 10), h = 2 * ri(1, 3); return [`A shape has ${w} whole squares and ${h} half squares. What is its area?`, 1, `${w} + ${h / 2} = ${w + h / 2} squares`, [["num", w + h / 2, "Squares"]]] },
+    () => { const a = ri(3, 6), b = ri(2, 4), c = ri(1, 3); return [`A ${a} by ${b} rectangle of squares is joined to a ${c} by ${c} square. What is the area of the whole shape?`, 2, `${a * b} (1) + ${c * c} = ${a * b + c * c} squares (1)`, [["num", a * b + c * c, "Squares"]]] }] };
   T[32] = { hw: [
     () => { const t = ri(1, 9), h = ri(1, 9), o = ri(1, 9), n = t * 1000 + h * 100 + o, w = `${W1[t]} thousand, ${W1[h]} hundred and ${W1[o]}`;
       return [`Write ${f(n)} in words.`, 1, w, [["s", [w, `${W1[t]} thousand ${W1[h]} hundred and ${W1[o]}`, `${W1[t]} thousand ${W1[h]} hundred ${W1[o]}`, `${W1[t]} thousand, ${W1[h]} hundred ${W1[o]}`], "In words"]]] },
