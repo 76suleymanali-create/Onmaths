@@ -2028,7 +2028,7 @@ document.addEventListener("click", e => {
   if (e.target.closest(".copy-code")){ const c = box.querySelector(".hw-code").textContent;
     try { navigator.clipboard.writeText(c).then(() => toast("Code copied."), () => { selectEl(box.querySelector(".hw-code")); toast("Press and hold the code to copy it.") }) } catch(err){ selectEl(box.querySelector(".hw-code")); toast("Press and hold the code to copy it.") } return }
   const rt = e.target.closest(".hw-retry"); if (rt){ if (!rt.dataset.sure){ rt.dataset.sure = "1"; rt.textContent = "Tap again to clear your answers"; return }
-    try { localStorage.removeItem(formSpec(box).store) } catch(err){} drawHwForm(box); toast("Cleared. Have another go!") }
+    try { localStorage.removeItem(formSpec(box).store) } catch(err){} { const S0 = formSpec(box); if (S0.type === "H") Y4GEN.fresh(S0.g, S0.i, "H") } drawHwForm(box); toast("Cleared. Have another go!") }
 });
 /* ===== Save answers as you type, resume later, and tell Mr Ali how far they've got ===== */
 const draftInfo = box => { if (box === etBox){ const g = etBox.dataset.g, i = +etBox.dataset.i; return { key: etStoreKey(g, i) + "-d", g, i, T: "W", label: "Exit ticket", topic: topicOf(g, i), get: () => collect() } }
@@ -2299,7 +2299,7 @@ etBox.addEventListener("click", e => {
   if (e.target.closest("#etRetry")){ const g = etBox.dataset.g, i = +etBox.dataset.i, b = e.target.closest("#etRetry");
     if (!b.dataset.sure){ b.dataset.sure = "1"; b.textContent = "Tap again to clear your answers"; return }
     try { localStorage.removeItem(etStoreKey(g, i)) } catch(err){}
-    drawExit(g, i); toast("Cleared. Have another go!"); document.getElementById("exit").scrollIntoView({ behavior: "smooth" }); return }
+    Y4GEN.fresh(g, i, "W"); drawExit(g, i); toast("Cleared. Have another go!"); document.getElementById("exit").scrollIntoView({ behavior: "smooth" }); return }
   if (e.target.closest("#etCopy")){ const c = document.getElementById("etCode").textContent;
     try { navigator.clipboard.writeText(c).then(() => toast("Code copied. Paste it in a message to Mr Ali."), () => { selectEl(document.getElementById("etCode")); toast("Press and hold the code to copy it.") }) }
     catch(err){ selectEl(document.getElementById("etCode")); toast("Press and hold the code to copy it.") } }
@@ -2954,6 +2954,102 @@ async function reportPdf(R){
   } catch(err){ if (!err || err.code !== "declined") toast("Couldn't download. Open the link in Safari or Chrome and try again.") }
 }
 try { tutorApply() } catch(e){ console.error(e) }
+/* ===== Year 4: new numbers every time a homework or exit ticket is tried again ===== */
+const Y4GEN = (() => {
+  const rng = s => () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 };
+  let R = Math.random;
+  const ri = (a, b) => a + Math.floor(R() * (b - a + 1));
+  const pick = a => a[Math.floor(R() * a.length)];
+  const f = n => { const s = String(Math.abs(n)); return (n < 0 ? "−" : "") + (s.length > 3 ? s.slice(0, -3) + " " + s.slice(-3) : s) };
+  const N = (v, l) => l ? [["num", v, l]] : [["num", v]];
+  const W1 = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+  const gcd = (a, b) => b ? gcd(b, a % b) : a;
+  const rem = (q, r) => [["s", [`${q} r ${r}`, `${q}r${r}`, `${q} remainder ${r}`, `${q}rem${r}`]]];
+  const sum4 = () => { const a = ri(1200, 5800), b = ri(1100, 9800 - a); return [a, b] };
+  const subEx = () => { let a, b; do { a = ri(4000, 9800); b = ri(1100, a - 900) } while (a % 10 >= b % 10); return [a, b] };
+  const subNoEx = () => { let a = 0, b = 0; for (let p = 1000; p >= 1; p /= 10){ const x = p === 1000 ? ri(4, 9) : ri(2, 9), y = p === 1000 ? ri(1, x - 1) : ri(0, x); a += x * p; b += y * p } return [a, b] };
+  const T = {};
+  T[0] = { hw: [
+    () => { const [a, b] = sum4(); return [`Work out ${f(a)} + ${f(b)}`, 1, f(a + b), N(a + b)] },
+    () => { const [a, b] = sum4(); return [`Work out ${f(a)} + ${f(b)}`, 2, f(a + b), N(a + b)] },
+    () => { const [a, b] = subNoEx(); return [`Work out ${f(a)} − ${f(b)}`, 1, f(a - b), N(a - b)] },
+    () => { const a = ri(4, 9) * 1000 + ri(1, 9), b = ri(1100, a - 1100); return [`Work out ${f(a)} − ${f(b)}`, 2, f(a - b), N(a - b)] },
+    () => { const s = ri(30, 60) * 100 + ri(1, 9) * 10, g = ri(900, 1800), n = ri(20, 90) * 10, r = s - g + n; return [`A library had ${f(s)} books. It gave away ${f(g)}, then bought ${f(n)} new ones. How many books does it have now?`, 3, `${f(s)} − ${f(g)} = ${f(s - g)}. ${f(s - g)} + ${f(n)} = ${f(r)}`, N(r)] }],
+    et: [
+    () => { const [a, b] = sum4(); return [`Work out ${f(a)} + ${f(b)}`, 1, f(a + b), N(a + b)] },
+    () => { const [a, b] = subEx(); return [`Work out ${f(a)} − ${f(b)}`, 1, f(a - b), N(a - b)] },
+    () => { const a = ri(30, 50) * 100 + ri(0, 9) * 10, b = ri(1000, 2000) + ri(1, 9) * 5; return [`A farm has ${f(a)} sheep. It sells ${f(b)}. How many sheep are left?`, 2, `${f(a)} − ${f(b)} (1) = ${f(a - b)} (1)`, N(a - b)] }] };
+  T[32] = { hw: [
+    () => { const t = ri(1, 9), h = ri(1, 9), o = ri(1, 9), n = t * 1000 + h * 100 + o, w = `${W1[t]} thousand, ${W1[h]} hundred and ${W1[o]}`;
+      return [`Write ${f(n)} in words.`, 1, w, [["s", [w, `${W1[t]} thousand ${W1[h]} hundred and ${W1[o]}`, `${W1[t]} thousand ${W1[h]} hundred ${W1[o]}`, `${W1[t]} thousand, ${W1[h]} hundred ${W1[o]}`], "In words"]]] },
+    () => { const d = [ri(1, 9), ri(0, 9), ri(0, 9), ri(0, 9)], p = ri(0, 2); d[p] = ri(1, 9); const n = +d.join(""), v = d[p] * [1000, 100, 10][p]; return [`What is the value of the ${d[p]} in ${f(n)}?`, 1, f(v), N(v)] },
+    () => { let n; do { n = ri(1100, 9800) } while (n % 100 === 50); const r = Math.round(n / 100) * 100; return [`Round ${f(n)} to the nearest 100.`, 1, f(r), N(r)] },
+    () => { const t = ri(2, 8); let x, y; do { x = ri(1, 9); y = ri(1, 9) } while (x === y); const L = [[x, y, 0], [x, 0, y], [y, x, 0], [0, x, y]].map(a => t * 1000 + +a.join("")), s = [...L].sort((a, b) => a - b);
+      return [`Put in order, smallest first: ${L.map(f).join(", ")}`, 2, s.map(f).join(", "), [["s", [s.join(",")], "Smallest first, with commas"]]] },
+    () => { const n = ri(1100, 8900); return [`What is 1 000 more than ${f(n)}?`, 1, f(n + 1000), N(n + 1000)] }],
+    et: [
+    () => { const t = ri(1, 9), n = t * 1000 + ri(100, 999); return [`What is the value of the ${t} in ${f(n)}?`, 1, f(t * 1000), N(t * 1000)] },
+    () => { let n; do { n = ri(1100, 9800) } while (n % 10 === 5 || n % 10 === 0); const r = Math.round(n / 10) * 10; return [`Round ${f(n)} to the nearest 10.`, 1, f(r), N(r)] },
+    () => { const n = ri(2, 9) * 1000 + ri(1, 9) * 10; return [`What number is 100 less than ${f(n)}?`, 1, f(n - 100), N(n - 100)] }] };
+  T[33] = { hw: [
+    () => { const [a, b] = subNoEx(); const x = a - b, y = b; return [`${f(x)} + ${f(y)}`, 1, f(a), N(a)] },
+    () => { const [a, b] = sum4(); return [`${f(a)} + ${f(b)}`, 2, f(a + b), N(a + b)] },
+    () => { const a = ri(4, 9) * 1000, b = ri(1100, a - 600); return [`${f(a)} − ${f(b)}`, 2, f(a - b), N(a - b)] },
+    () => { const [a, b] = subEx(); return [`${f(a)} − ${f(b)}`, 2, f(a - b), N(a - b)] },
+    () => { const a = ri(1000, 2500), b = ri(150, 800); return [`A school has ${f(a)} books. It buys ${f(b)} more. How many books does it have now?`, 2, f(a + b), N(a + b)] }],
+    et: [
+    () => { const [a, b] = sum4(); return [`${f(a)} + ${f(b)}`, 1, f(a + b), N(a + b)] },
+    () => { const a = ri(4, 9) * 1000, b = ri(1100, a - 600); return [`${f(a)} − ${f(b)}`, 2, f(a - b), N(a - b)] },
+    () => { const a = ri(20, 40) * 50, b = ri(300, 950); return [`Sam has £${f(a)} and spends £${f(b)}. How much is left?`, 2, `£${f(a - b)}`, N(a - b, "£")] }] };
+  const tt = (t, m) => () => { const k = ri(2, 12); return [`${t} × ${k}`, 1, String(t * k), N(t * k)] };
+  const dv = t => () => { const k = ri(2, 12); return [`${t * k} ÷ ${t}`, 1, String(k), N(k)] };
+  T[34] = { hw: [tt(6), tt(9), dv(6), tt(3), () => { const k = ri(3, 12); return [`Eggs come in boxes of 6. How many eggs are in ${k} boxes?`, 1, String(6 * k), N(6 * k)] }],
+    et: [() => { const k = ri(2, 12); return [`${k} × 6`, 1, String(6 * k), N(6 * k)] }, dv(9), () => { const k = ri(4, 12); return [`A pack has 3 pens. How many pens are in ${k} packs?`, 1, String(3 * k), N(3 * k)] }] };
+  T[35] = { hw: [tt(7), tt(11), tt(12), dv(12), () => { const k = ri(3, 12); return [`There are 7 days in a week. How many days are in ${k} weeks?`, 1, String(7 * k), N(7 * k)] }],
+    et: [() => { const k = ri(2, 12); return [`${k} × 12`, 1, String(12 * k), N(12 * k)] }, tt(11), dv(7)] };
+  const mul = (a, b, c, d, m) => () => { const x = ri(a, b), y = ri(c, d); return [`${x} × ${y}`, m, f(x * y), N(x * y)] };
+  T[36] = { hw: [() => { const x = ri(1, 3) * 10 + ri(1, 3), y = ri(2, 3); return [`${x} × ${y}`, 1, String(x * y), N(x * y)] }, mul(25, 49, 4, 4, 2), mul(45, 79, 6, 6, 2), mul(55, 89, 5, 5, 2),
+    () => { const p = ri(35, 59), b = ri(6, 9); return [`A bus holds ${p} people. How many people fit in ${b} buses?`, 2, `${p} × ${b} = ${f(p * b)}`, N(p * b)] }],
+    et: [mul(24, 49, 5, 5, 2), mul(51, 89, 3, 3, 2), () => { const a = ri(15, 35), b = ri(4, 8); return [`A box holds ${a} apples. How many apples are in ${b} boxes?`, 2, `${a} × ${b} = ${f(a * b)}`, N(a * b)] }] };
+  const dr = (d, qa, qb, m) => () => { const q = ri(qa, qb), r = ri(1, d - 1); return [`${d * q + r} ÷ ${d}`, m, `${q} r ${r}`, rem(q, r)] };
+  T[37] = { hw: [dr(5, 2, 9, 1), dr(4, 3, 9, 1), () => { const q = ri(11, 24); return [`${4 * q} ÷ 4`, 2, String(q), N(q)] }, dr(7, 10, 13, 2),
+    () => { const d = ri(4, 8), q = ri(5, 9), r = ri(1, d - 1); return [`${d * q + r} sweets are shared between ${d} children. How many does each child get, and how many are left over?`, 2, `${q} each, ${r} left over`, [["num", q, "Each child gets"], ["num", r, "Left over"]]] }],
+    et: [() => { const q = ri(11, 30); return [`${3 * q} ÷ 3`, 2, String(q), N(q)] },
+    () => { const q = ri(4, 9), r = ri(1, 4); return [`${5 * q + r} ÷ 5`, 1, `${q} remainder ${r}`, [["num", q, "Answer"], ["num", r, "Remainder"]]] },
+    () => { const q = ri(5, 9), r = ri(1, 3), n = 4 * q + r; return [`${n} children sit at tables of 4. How many tables are needed?`, 2, `${q + 1} tables (${q} full tables and 1 more for the last ${r})`, N(q + 1, "Tables")] }] };
+  let L38, W38;
+  T[38] = { hw: [
+    () => { L38 = ri(5, 12); W38 = ri(2, L38 - 1); return [`Find the perimeter of a rectangle ${L38} cm long and ${W38} cm wide.`, 1, `${2 * (L38 + W38)} cm`, N(2 * (L38 + W38))] },
+    () => [`Find the area of the same rectangle.`, 1, `${L38 * W38} cm²`, N(L38 * W38)],
+    () => { const s = ri(4, 12); return [`Find the perimeter of a square with sides of ${s} cm.`, 1, `${4 * s} cm`, N(4 * s)] },
+    () => { const l = ri(5, 10), w = ri(2, l - 1); return [`A rectangle has a perimeter of ${2 * (l + w)} cm and a length of ${l} cm. How wide is it?`, 2, `${w} cm`, N(w)] },
+    () => { let a, b, s; do { a = ri(2, 4); b = ri(6, 10); s = ri(3, 7) } while (a * b === s * s); const ans = a * b > s * s ? "The rectangle" : "The square";
+      return [`Which has the bigger area: a ${a} cm by ${b} cm rectangle or a ${s} cm by ${s} cm square?`, 2, `${ans} (${a * b} cm² v ${s * s} cm²)`, [["mc", ans, "Choose", ["The rectangle", "The square", "Same"]]]] }],
+    et: [
+    () => { const s = ri(4, 12); return [`Find the perimeter of a square with sides of ${s} cm.`, 1, `${4 * s} cm`, N(4 * s, "cm")] },
+    () => { const a = ri(3, 12), b = ri(2, 9); return [`Find the area of a rectangle ${a} cm by ${b} cm.`, 1, `${a * b} cm²`, N(a * b, "cm²")] },
+    () => { const w = ri(2, 6), l = ri(w + 1, 12); return [`A rectangle has area ${l * w} cm² and width ${w} cm. How long is it?`, 2, `${l} cm`, N(l, "cm")] }] };
+  const eqv = (nums) => () => { const d = pick(nums.d), n = nums.n === 1 ? 1 : ri(1, d - 1), m = ri(2, 4); return [`Fill in the gap: ${n}/${d} = ?/${d * m}`, 1, String(n * m), N(n * m, "Missing number")] };
+  const simp = () => { let n, d; do { d = ri(2, 6); n = ri(1, d - 1) } while (gcd(n, d) !== 1); const m = ri(2, 4); return [`Simplify ${n * m}/${d * m}`, 1, `${n}/${d}`, [["s", [`${n}/${d}`]]]] };
+  const cmp = (lab) => () => { let d, n, m, n2; do { d = pick([2, 3, 4, 5]); n = ri(1, d - 1); m = pick([2, 3]); n2 = ri(1, d * m - 1) } while (gcd(n, d) !== 1 || n2 * 1 === n * m); const a = `${n}/${d}`, b = `${n2}/${d * m}`, big = n * m > n2 ? a : b;
+    return [`Which is bigger, ${a} or ${b}?`, 2, `${big}, because ${a} = ${n * m}/${d * m}`, [["mc", big, lab, [a, b]]]] };
+  T[39] = { hw: [eqv({ n: 1, d: [2, 3, 4, 5] }), eqv({ n: 2, d: [3, 4, 5] }), simp, cmp("Choose"), () => { const k = pick([2, 3, 4, 5]), x = ri(3, 12); return [`Find 1/${k} of ${k * x}`, 1, String(x), N(x)] }],
+    et: [eqv({ n: 2, d: [3, 4, 5] }), simp, cmp("Bigger fraction")] };
+  const seedKey = (i, t) => `onmaths-gen-y4-${t}-${i}`;
+  function apply(i, t, fresh){
+    const G = T[i]; if (!G || !HWX.y4) return;
+    let s = null; try { s = fresh ? null : localStorage.getItem(seedKey(i, t)) } catch(e){}
+    if (!s){ s = String(1 + Math.floor(Math.random() * 2e9)); try { localStorage.setItem(seedKey(i, t), s) } catch(e){} }
+    R = rng(+s);
+    if (t === "H"){ const W = HWX.y4.weeks[i], b = HWXB.y4 && HWXB.y4[i]; if (!W || !b || !HKEYS[b]) return; const out = G.hw.map(g => g()); W.hw = out.map(q => q.slice(0, 3)); HKEYS[b] = out.map(q => q[3]) }
+    else { if (!ETX.y4 || !ETX.y4[i] || !KEYS.y4 || !KEYS.y4[i]) return; const out = G.et.map(g => g()); ETX.y4[i] = out.map(q => q.slice(0, 3)); KEYS.y4[i] = out.map(q => q[3]) }
+    R = Math.random;
+  }
+  const has = (g, i) => g === "y4" && !!T[i];
+  return { init(){ Object.keys(T).forEach(i => { try { apply(+i, "H"); apply(+i, "W") } catch(e){ console.error(e) } }) }, fresh(g, i, t){ if (has(g, i)) try { apply(i, t, true) } catch(e){ console.error(e) } }, T };
+})();
+try { if (!TEACHER) Y4GEN.init() } catch(e){ console.error(e) }
+
 try { if (!TEACHER) hwLinkTest() } catch(e){}
 try { borrowLater() } catch(e){}
 { let g0 = null; try { g0 = localStorage.getItem("onmaths-group") } catch(e){}
