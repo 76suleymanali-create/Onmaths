@@ -552,6 +552,7 @@ footer b{color:var(--ink);font-family:var(--display)}
       <a href="#groups">My group</a>
       <a href="#year11">Year 11 lessons</a>
       <a href="#exit">Exit ticket</a>
+      <a href="#practice" id="navPractice" hidden>Practice</a>
       <a href="#y11hw">Homework</a>
       <a href="#homework">Homework sites</a>
       <a href="#revision">Revision</a>
@@ -3115,7 +3116,7 @@ const PRACTICE = (() => {
     const o = e.target.closest(".propt"); if (o && !o.disabled){ B.querySelectorAll(`.propt[data-k="${o.dataset.k}"][data-j="${o.dataset.j}"]`).forEach(b => b.setAttribute("aria-pressed", b === o)); return }
     if (e.target.closest(".pr-mark")){ mark(); return }
     if (e.target.closest(".pr-new")){ make(); document.getElementById("practice").scrollIntoView({ behavior: "smooth" }); toast("New questions. Good luck!") } });
-  return { get cur(){ return cur }, render(g){ const sec = document.getElementById("practice"); if (!sec) return; sec.hidden = g !== "y4"; if (g === "y4" && !cur) make() }, make, SLOTS };
+  return { get cur(){ return cur }, render(g){ const sec = document.getElementById("practice"); if (!sec) return; sec.hidden = g !== "y4"; const na = document.getElementById("navPractice"); if (na) na.hidden = g !== "y4"; if (g === "y4" && !cur) make() }, make, SLOTS };
 })();
 
 
@@ -3147,7 +3148,7 @@ function lockSite(g){
   LOCKED = true;
   { const rh = renderHw; renderHw = gid => { rh(gid); studentWeekView(gid) } }
   if (!fromLink) setGroup(g, false); else renderHw(g); try { PRACTICE.render(g) } catch(e){}
-  setTimeout(() => { const t = document.getElementById(location.hash.startsWith("#report=") ? "y11hw" : new URLSearchParams(location.search).get("t") ? "paplist" : "video"); if (t && fromLink) t.scrollIntoView({ behavior: "smooth" }) }, 50);
+  setTimeout(() => { const t = document.getElementById(location.hash.startsWith("#report=") ? "y11hw" : new URLSearchParams(location.search).get("t") ? "paplist" : (new URLSearchParams(location.search).get("p") && g === "y4") ? "practice" : "video"); if (t && fromLink) t.scrollIntoView({ behavior: "smooth" }) }, 50);
   hide(".gbar"); hide("#groupPills"); hide(".picker");
   const setP = (sel, t) => { const el = document.querySelector(sel); if (el) el.textContent = t };
   setP("#week .sec-head p", "Last week, this week and next week's topic.");
