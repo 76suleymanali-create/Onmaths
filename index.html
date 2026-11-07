@@ -1982,7 +1982,7 @@ function genRef(g, slot, store, j){
   const ck = `${g}|${slot}|${store || ""}|${j || 0}|${seed}`; if (GQ[ck]) return GQ[ck];
   let s0 = (seed + (j || 0) * 7919 + slot * 104729) | 0; const mr = Math.random;
   Math.random = () => { s0 = s0 + 0x6D2B79F5 | 0; let t = Math.imul(s0 ^ s0 >>> 15, 1 | s0); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 };
-  let q = null; try { const [topic, fs] = S[slot], f = fs[Math.floor(Math.random() * fs.length)], r = f(); q = { q: r[0], marks: 1, key: r[3], topic, ans: r[2] } } finally { Math.random = mr }
+  let q = null; try { const [topic, fs] = S[slot], f = fs[Math.floor(Math.random() * fs.length)], r = f(); q = { q: String(r[0]).replace(/(^|[\s(=,:])-(\d)/g, "$1−$2"), marks: 1, key: r[3], topic, ans: String(r[2]).replace(/(^|[\s(=,:])-(\d)/g, "$1−$2") } } finally { Math.random = mr }
   return GQ[ck] = q;
 }
 function resolveRef(ref, ctx){
@@ -3154,9 +3154,102 @@ const PRACTICE = (() => {
     ["Surds", [surd]], ["Expanding three brackets", [triple]], ["Factorising quadratics", [facq]], ["Algebraic fractions", [algfrac]],
     ["Fractional and negative indices", [indices]], ["Rearranging formulae", [rearr]], ["Completing the square", [ctsq]], ["Quadratic inequalities", [qineq]],
     ["GCSE basics: solving equations", [linsolve]], ["GCSE basics: algebra and graphs", [gcseAlg]]];
+  /* --- GCSE (Year 11 Sets 2, 3, 4) --- */
+  const r1 = v => Math.round(v * 10) / 10, r2 = v => Math.round(v * 100) / 100;
+  const n1 = (v, l) => [["num", r1(v), l, 0.051]], n2 = (v, l) => [["num", r2(v), l, 0.0051]];
+  const money = v => "£" + r2(v).toFixed(2);
+  const sgnN = n => n < 0 ? `− ${-n}` : `+ ${n}`;
+  const pctAmount = () => { const p = pick([5, 10, 15, 20, 25, 30, 35, 40, 60, 75]), a = ri(4, 48) * 10, up = Math.random() < .5, v = up ? a * (1 + p / 100) : a * (1 - p / 100);
+    return [`${up ? "Increase" : "Decrease"} £${a} by ${p}%`, 1, money(v), [["num", r2(v), "£", 0.0051]]] };
+  const pctChange = () => { const a = ri(4, 40) * 5, p = pick([10, 20, 25, 30, 40, 50, 60, 15, 35]), up = Math.random() < .5, b = up ? a * (1 + p / 100) : a * (1 - p / 100);
+    if (!Number.isInteger(b)) return pctChange();
+    return [`A price changes from £${a} to £${b}. Work out the percentage ${up ? "increase" : "decrease"}.`, 1, `${p}%`, [["num", p, "%"]]] };
+  const revPct = () => { const o = ri(4, 60) * 5, p = pick([10, 20, 25, 30, 40, 15]), up = Math.random() < .5, n = up ? o * (1 + p / 100) : o * (1 - p / 100);
+    if (!Number.isInteger(n * 100)) return revPct();
+    return [`After a ${p}% ${up ? "increase" : "decrease"}, a price is ${money(n)}. What was the original price?`, 1, money(o), [["num", o, "£", 0.0051]]] };
+  const compound = () => { const P = ri(5, 40) * 100, r = pick([2, 3, 4, 5, 6]), n = ri(2, 5), dep = Math.random() < .35, v = dep ? P * (1 - r * 2 / 100) ** n : P * (1 + r / 100) ** n;
+    return dep ? [`A car is worth £${P}. It loses ${r * 2}% of its value each year. Work out its value after ${n} years.`, 1, money(v), [["num", r2(v), "£", 0.0051]]]
+      : [`£${P} is invested at ${r}% compound interest per year. Work out the value after ${n} years.`, 1, money(v), [["num", r2(v), "£", 0.0051]]] };
+  const ratioShare = () => { const a = ri(1, 7), b = ri(1, 7), c = Math.random() < .3 ? ri(1, 5) : 0, k = ri(2, 15) * (c ? 2 : 5), parts = c ? [a, b, c] : [a, b], tot = parts.reduce((x, y) => x + y) * k, w = ri(0, parts.length - 1);
+    return [`Share £${tot} in the ratio ${parts.join(" : ")}. How much is the ${["first", "second", "third"][w]} share?`, 1, `£${parts[w] * k}`, [["num", parts[w] * k, "£"]]] };
+  const ratioPart = () => { const a = ri(2, 7), b = ri(2, 9), k = ri(3, 12); if (a === b) return ratioPart();
+    return [`Red and blue counters are in the ratio ${a} : ${b}. There are ${a * k} red counters. How many blue counters are there?`, 1, String(b * k), [["num", b * k]]] };
+  const linEq = () => { const t = Math.random(), x = nz(-6, 10);
+    if (t < .35){ const a = ri(2, 9), b = ri(-15, 15); return [`Solve ${a}x ${sgnN(b)} = ${a * x + b}`, 1, `x = ${x}`, [["num", x, "x ="]]] }
+    if (t < .7){ const a = ri(2, 6), b = nz(-7, 7), c = a * (x + b); return [`Solve ${a}(x ${sgnN(b)}) = ${c}`, 1, `x = ${x}`, [["num", x, "x ="]]] }
+    return linsolve() };
+  const expand2 = () => { const a = nz(-8, 8), b = nz(-8, 8), [o, k] = poly([1, a + b, a * b]); return [`Expand and simplify ${br(a)}${br(b)}`, 1, o, [["simp", k]]] };
+  const facMonic = () => { const t = Math.random();
+    if (t < .2){ const a = ri(2, 11); return [`Factorise x^{2} − ${a * a}`, 1, `(x + ${a})(x − ${a})`, [["fac", `(x+${a})(x-${a})`]]] }
+    if (t < .35){ const a = ri(2, 9), b = nz(-9, 9); if (gcd(a, b) !== 1) return facMonic(); return [`Factorise ${a}x^{2} ${b < 0 ? "−" : "+"} ${Math.abs(b)}x`, 1, `x(${a}x ${b < 0 ? "−" : "+"} ${Math.abs(b)})`, [["fac", `x(${a}x${b < 0 ? "-" : "+"}${Math.abs(b)})`]]] }
+    const a = nz(-8, 8), b = nz(-8, 8), [o] = poly([1, a + b, a * b]); if (a + b === 0) return facMonic(); return [`Factorise ${o}`, 1, `${br(a)}${br(b)}`, [["fac", `${brk(a)}${brk(b)}`]]] };
+  const solveQuad = () => { const a = nz(-8, 8), b = nz(-8, 8); if (a === b) return solveQuad(); const [o] = poly([1, -(a + b), a * b]);
+    return [`Solve ${o} = 0`, 1, `x = ${a} or x = ${b}`, [["set", [a, b], "Both values, e.g. 2, −5"]]] };
+  const simul = () => { let a, b, c, d; do { a = ri(1, 5); b = nz(-4, 4); c = ri(1, 5); d = nz(-4, 4) } while (a * d - b * c === 0); const x = nz(-5, 6), y = nz(-5, 6);
+    const e1 = `${a === 1 ? "" : a}x ${b < 0 ? "−" : "+"} ${Math.abs(b) === 1 ? "" : Math.abs(b)}y = ${a * x + b * y}`, e2 = `${c === 1 ? "" : c}x ${d < 0 ? "−" : "+"} ${Math.abs(d) === 1 ? "" : Math.abs(d)}y = ${c * x + d * y}`;
+    return [`Solve the simultaneous equations: ${e1} and ${e2}`, 1, `x = ${x}, y = ${y}`, [["num", x, "x ="], ["num", y, "y ="]]] };
+  const pyth = () => { const [p, q, h] = pick([[3, 4, 5], [5, 12, 13], [8, 15, 17], [7, 24, 25], [6, 8, 10], [9, 12, 15], [20, 21, 29]]), t = Math.random();
+    if (t < .4) return [`A right-angled triangle has shorter sides ${p} cm and ${q} cm. Work out the hypotenuse.`, 1, `${h} cm`, [["num", h, "cm"]]];
+    if (t < .7) return [`A right-angled triangle has hypotenuse ${h} cm and one side ${p} cm. Work out the other side.`, 1, `${q} cm`, [["num", q, "cm"]]];
+    const a = ri(3, 12), b = ri(3, 12), v = Math.sqrt(a * a + b * b); return [`A right-angled triangle has shorter sides ${a} cm and ${b} cm. Work out the hypotenuse to 1 decimal place.`, 1, `${r1(v)} cm`, n1(v, "cm")] };
+  const trig = () => { const t = Math.random(), ang = ri(20, 70), s = ri(5, 20), rad = ang * Math.PI / 180;
+    if (t < .35) return [`A right-angled triangle has hypotenuse ${s} cm and angle ${ang}°. Work out the side opposite the angle, to 1 d.p.`, 1, `${r1(s * Math.sin(rad))} cm`, n1(s * Math.sin(rad), "cm")];
+    if (t < .65) return [`A right-angled triangle has the side adjacent to a ${ang}° angle equal to ${s} cm. Work out the opposite side, to 1 d.p.`, 1, `${r1(s * Math.tan(rad))} cm`, n1(s * Math.tan(rad), "cm")];
+    const o = ri(3, 12), h = ri(o + 2, 20), v = Math.asin(o / h) * 180 / Math.PI; return [`A right-angled triangle has opposite side ${o} cm and hypotenuse ${h} cm. Work out the angle, to 1 d.p.`, 1, `${r1(v)}°`, n1(v, "°")] };
+  const circle = () => { const r = ri(2, 15), t = Math.random(), d = Math.random() < .4;
+    if (t < .5) return [`Work out the area of a circle with ${d ? "diameter " + 2 * r : "radius " + r} cm. Give your answer to 1 d.p.`, 1, `${r1(Math.PI * r * r)} cm²`, n1(Math.PI * r * r, "cm²")];
+    return [`Work out the circumference of a circle with ${d ? "diameter " + 2 * r : "radius " + r} cm. Give your answer to 1 d.p.`, 1, `${r1(2 * Math.PI * r)} cm`, n1(2 * Math.PI * r, "cm")] };
+  const sector = () => { const r = ri(4, 15), a = pick([30, 40, 45, 60, 72, 80, 100, 120, 135, 150]), t = Math.random() < .5;
+    return t ? [`A sector has radius ${r} cm and angle ${a}°. Work out its area, to 1 d.p.`, 1, `${r1(a / 360 * Math.PI * r * r)} cm²`, n1(a / 360 * Math.PI * r * r, "cm²")]
+      : [`A sector has radius ${r} cm and angle ${a}°. Work out the arc length, to 1 d.p.`, 1, `${r1(a / 360 * 2 * Math.PI * r)} cm`, n1(a / 360 * 2 * Math.PI * r, "cm")] };
+  const idx = () => { const t = Math.random(), a = ri(2, 9), b = ri(2, 9);
+    if (t < .3) return [`Simplify x^{${a}} × x^{${b}}`, 1, `x^{${a + b}}`, [["simp", `x^${a + b}`]]];
+    if (t < .55){ const c = a + b; return [`Simplify x^{${c}} ÷ x^{${b}}`, 1, `x^{${a}}`, [["simp", `x^${a}`]]] }
+    if (t < .75){ const c = ri(2, 4); return [`Simplify (x^{${a}})^{${c}}`, 1, `x^{${a * c}}`, [["simp", `x^${a * c}`]]] }
+    const m = ri(11, 98) / 10, e = ri(3, 7), v = Math.round(m * 10 ** e); return [`Write ${v.toLocaleString("en-GB").replace(/,/g, " ")} in standard form.`, 1, `${m} × 10^{${e}}`, [["sf", v]]] };
+  const sform = () => { const m1 = ri(11, 49) / 10, m2 = ri(11, 49) / 10, e1 = ri(2, 6), e2 = ri(2, 6); let M = +(m1 * m2).toFixed(2), E = e1 + e2; if (M >= 10){ M = +(M / 10).toFixed(3); E++ }
+    return [`Work out (${m1} × 10^{${e1}}) × (${m2} × 10^{${e2}}). Give your answer in standard form.`, 1, `${M} × 10^{${E}}`, [["sf", +(M * 10 ** E).toPrecision(8)]]] };
+  const prob = () => { const t = Math.random();
+    if (t < .35){ const p = ri(5, 85) / 100; return [`The probability it rains tomorrow is ${p}. What is the probability it does not rain?`, 1, String(r2(1 - p)), [["num", r2(1 - p)]]] }
+    if (t < .65){ const p = pick([0.1, 0.2, 0.25, 0.3, 0.4, 0.15]), n = pick([40, 60, 80, 100, 120, 200]); return [`The probability a spinner lands on red is ${p}. It is spun ${n} times. How many times would you expect red?`, 1, String(r2(p * n)), [["num", r2(p * n)]]] }
+    const r = ri(2, 8), b = ri(2, 8), g = ri(1, 6), tot = r + b + g; return [`A bag has ${r} red, ${b} blue and ${g} green counters. One is taken at random. What is the probability it is blue?`, 1, `${b}/${tot}`, [["num", b / tot]]] };
+  const tree = () => { const p = pick([0.2, 0.3, 0.4, 0.6, 0.7, 0.8]), q = pick([0.1, 0.25, 0.4, 0.5, 0.6, 0.75]), both = Math.random() < .5;
+    return both ? [`P(Sam is late) = ${p} and P(Amy is late) = ${q}, independently. Work out the probability both are late.`, 1, String(r2(p * q)), [["num", r2(p * q), "", 0.0001]]]
+      : [`P(Sam is late) = ${p} and P(Amy is late) = ${q}, independently. Work out the probability neither is late.`, 1, String(r2((1 - p) * (1 - q))), [["num", r2((1 - p) * (1 - q)), "", 0.0001]]] };
+  const area = () => { const t = Math.random(), a = ri(3, 14), b = ri(3, 12), h = ri(2, 10);
+    if (t < .33) return [`Work out the area of a triangle with base ${a} cm and height ${h} cm.`, 1, `${a * h / 2} cm²`, [["num", a * h / 2, "cm²"]]];
+    if (t < .66) return [`Work out the area of a trapezium with parallel sides ${a} cm and ${b} cm and height ${2 * Math.ceil(h / 2)} cm.`, 1, `${(a + b) * Math.ceil(h / 2)} cm²`, [["num", (a + b) * Math.ceil(h / 2), "cm²"]]];
+    return [`A rectangle is ${a} cm by ${b} cm. Work out its perimeter.`, 1, `${2 * (a + b)} cm`, [["num", 2 * (a + b), "cm"]]] };
+  const fracOps = () => { const t = Math.random(), d1 = pick([2, 3, 4, 5, 6, 8]), d2 = pick([3, 4, 5, 6, 10]), n1_ = ri(1, d1 - 1), n2_ = ri(1, d2 - 1);
+    if (t < .35){ const k = pick([2, 3, 4, 5, 8]), m = ri(1, k - 1), A = k * ri(3, 15); return [`Work out ${m}/${k} of ${A}`, 1, String(m * A / k), [["num", m * A / k]]] }
+    if (t < .7){ const v = n1_ / d1 + n2_ / d2, D = d1 * d2 / gcd(d1, d2), N = Math.round(v * D), g = gcd(N, D); return [`Work out ${n1_}/${d1} + ${n2_}/${d2}`, 1, `${N / g}/${D / g}`, [["num", v]]] }
+    const v = (n1_ / d1) * (n2_ / d2), N = n1_ * n2_, D = d1 * d2, g = gcd(N, D); return [`Work out ${n1_}/${d1} × ${n2_}/${d2}`, 1, `${N / g}/${D / g}`, [["num", v]]] };
+  const nth = () => { const d = nz(-6, 8), f = ri(-6, 12), seq = [1, 2, 3, 4].map(n => d * n + f), [o, k] = poly([d, f], "n"); return [`Find the nth term of ${seq.join(", ")}, …`, 1, o, [["simp", k]]] };
+  const ineq = () => { const a = ri(2, 7), x = nz(-5, 8), b = ri(-10, 10), sign = pick(["<", ">", "≤", "≥"]);
+    return [`Solve ${a}x ${sgnN(b)} ${sign} ${a * x + b}. Give the number in your answer: x ${sign} ☐`, 1, `x ${sign} ${x}`, [["num", x, `x ${sign}`]]] };
+  const propn = () => { if (Math.random() < .5){ const k = ri(2, 9), x1 = ri(2, 6), x2 = ri(7, 12); return [`y is directly proportional to x. When x = ${x1}, y = ${k * x1}. Find y when x = ${x2}.`, 1, String(k * x2), [["num", k * x2, "y ="]]] }
+    const x1 = ri(2, 6), y1 = ri(2, 12), K = x1 * y1, ds = [...Array(K).keys()].map(i => i + 1).filter(d => K % d === 0 && d !== x1 && d > 1 && d < K), x2 = ds.length ? pick(ds) : 2 * x1;
+    return [`y is inversely proportional to x. When x = ${x1}, y = ${y1}. Find y when x = ${x2}.`, 1, String(r2(K / x2)), [["num", r2(K / x2), "y =", 0.0051]]] };
+  const angles = () => { const t = Math.random(), n = pick([5, 6, 8, 9, 10, 12]);
+    if (t < .5) return [`Work out the size of each interior angle of a regular polygon with ${n} sides.`, 1, `${r1(180 - 360 / n)}°`, [["num", r1(180 - 360 / n), "°", 0.051]]];
+    const a = ri(25, 80), b = ri(25, 80); return [`Two angles in a triangle are ${a}° and ${b}°. Work out the third angle.`, 1, `${180 - a - b}°`, [["num", 180 - a - b, "°"]]] };
+  SETS.y11s4 = [
+    ["Percentage change", [pctAmount, pctChange]], ["Reverse percentages", [revPct]], ["Ratio: sharing", [ratioShare]], ["Ratio problems", [ratioPart]],
+    ["Basics: solving equations", [linEq]], ["Basics: area and perimeter", [area]], ["Basics: Pythagoras", [pyth]], ["Basics: probability", [prob]],
+    ["Basics: fractions", [fracOps]], ["Basics: angles and sequences", [angles, nth]]];
+  SETS.y11s3 = [
+    ["Expanding brackets", [expand2]], ["Factorising", [facMonic]], ["Solving quadratics", [solveQuad]],
+    ["Basics: simultaneous equations", [simul]], ["Basics: percentages", [revPct, compound]], ["Basics: indices and standard form", [idx]], ["Basics: ratio and proportion", [ratioShare, propn]],
+    ["Basics: Pythagoras", [pyth]], ["Basics: trigonometry", [trig]], ["Basics: circles", [circle]]];
+  SETS.y11s2 = [
+    ["Simultaneous equations", [simul]], ["Quadratics: factorising", [facMonic]], ["Quadratics: solving", [solveQuad]],
+    ["Basics: compound interest and reverse %", [compound, revPct]], ["Basics: trigonometry", [trig]], ["Basics: arcs and sectors", [sector]], ["Basics: probability trees", [tree]],
+    ["Basics: proportion", [propn]], ["Basics: standard form", [sform, idx]], ["Basics: inequalities", [ineq]]];
+
   let cur = null, done = false, pg = "y4";
   const box = () => document.getElementById("prBox");
-  function make(){ cur = SETS[pg].map(([topic, fs]) => { const q = one(pick(fs)()); return { topic, q: q[0], marks: 1, ans: q[2], key: q[3] } }); done = false; draw() }
+  const fixNeg = t => String(t).replace(/(^|[\s(=,:])-(\d)/g, "$1−$2");
+  function make(){ cur = SETS[pg].map(([topic, fs]) => { const q = one(pick(fs)()); return { topic, q: fixNeg(q[0]), marks: 1, ans: fixNeg(q[2]), key: q[3] } }); done = false; draw() }
   function draw(){
     const B = box(); if (!B) return;
     let h = `<p class="tiernote" style="margin:0">10 questions · 1 mark each · do your working on paper</p>`;
