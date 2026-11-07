@@ -757,6 +757,7 @@ footer b{color:var(--ink);font-family:var(--display)}
       <div class="tb-form">
         <label for="tbGroup"><b>Group</b></label><select id="tbGroup"></select>
         <label for="tbTitle"><b>Test name</b></label><input id="tbTitle" type="text" maxlength="60" placeholder="e.g. Half-term assessment">
+        <label for="tbStu"><b>Set as homework for</b></label><select id="tbStu"><option value="">Whole group</option></select>
         <div id="tbTopics" class="tb-topics" role="group" aria-label="Topics"></div>
         <label for="tbPer"><b>Questions per topic</b></label><select id="tbPer"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option></select>
         <div class="tb-btns"><button type="button" id="tbMake" class="et-go">Make test</button></div>
@@ -1972,7 +1973,20 @@ let BYBASE = null;
 function baseIndex(){ if (BYBASE) return BYBASE; BYBASE = {};
   HWGROUPS.forEach(([g]) => { for (let i = 0; i < 120; i++){ let I; try { I = hwInfo(g, i) } catch(e){ continue } if (I && I.hw && I.base && HKEYS[I.base] && !BYBASE[I.base]) BYBASE[I.base] = { g, i } } });
   return BYBASE }
-function resolveRef(ref){
+const GQ = {};
+function genRef(g, slot, store, j){
+  let S; try { S = PRACTICE.SETS[g] } catch(e){ return { q: "New question", marks: 1, key: [["num", 0]], topic: "", pending: true } }
+  if (!S || !S[slot]) return null;
+  let seed = 1;
+  if (store){ try { seed = +localStorage.getItem("onmaths-gseed-" + store) || 0 } catch(e){} if (!seed){ seed = 1 + Math.floor(Math.random() * 2e9); try { localStorage.setItem("onmaths-gseed-" + store, seed) } catch(e){} } }
+  const ck = `${g}|${slot}|${store || ""}|${j || 0}|${seed}`; if (GQ[ck]) return GQ[ck];
+  let s0 = (seed + (j || 0) * 7919 + slot * 104729) | 0; const mr = Math.random;
+  Math.random = () => { s0 = s0 + 0x6D2B79F5 | 0; let t = Math.imul(s0 ^ s0 >>> 15, 1 | s0); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 };
+  let q = null; try { const [topic, fs] = S[slot], f = fs[Math.floor(Math.random() * fs.length)], r = f(); q = { q: r[0], marks: 1, key: r[3], topic, ans: r[2] } } finally { Math.random = mr }
+  return GQ[ck] = q;
+}
+function resolveRef(ref, ctx){
+  if (/^g:/.test(String(ref))){ const [, g, sl] = String(ref).split(":"); return genRef(g, +sl, ctx && ctx.store, ctx && ctx.j) }
   const m = String(ref).match(/^([hp]):(.+):(\d+)$/); if (!m) return null; const k = +m[3];
   if (m[1] === "h"){ const at = baseIndex()[m[2]]; if (!at) return null; const I = hwInfo(at.g, at.i), q = I.hw[k], key = HKEYS[m[2]][k]; return q && key ? { q: q[0], marks: q[1], key, topic: I.topic } : null }
   const P = papById(m[2]), q = P && P.questions[k]; return q && Array.isArray(q.key) ? { q: q.q, marks: q.marks, key: q.key, topic: q.topic } : null }
@@ -1980,7 +1994,7 @@ let TESTS = []; try { TESTS = JSON.parse(localStorage.getItem("onmaths-tests") |
 const testOf = (g, n) => TESTS.find(t => t.g === g && t.n === n);
 const recentTest = g => TESTS.filter(t => t.g === g && (!t.s || pnorm(t.s) === pnorm(myName())) && (!t.c || Date.now() - Date.parse(t.c) < 10 * 864e5)).sort((a, b) => b.n - a.n)[0] || null;
 function addTest(T){ if (!T || !T.g || !T.n || !Array.isArray(T.r)) return; TESTS = TESTS.filter(t => !(t.g === T.g && t.n === T.n)); TESTS.push(T); if (!TEACHER){ try { localStorage.setItem("onmaths-tests", JSON.stringify(TESTS)) } catch(e){} } }
-const testLink = T => `${STUDENT_URL}?t=${b64u(JSON.stringify({ g: T.g, n: T.n, title: T.title, r: T.r, d: T.d, c: T.c }))}#${T.g}`;
+const testLink = T => `${STUDENT_URL}?t=${b64u(JSON.stringify({ g: T.g, n: T.n, title: T.title, r: T.r, d: T.d, c: T.c, ...(T.s ? { s: T.s } : {}) }))}${T.s ? "&n=" + encodeURIComponent(T.s) : ""}#${T.g}`;
 /* Short homework links from Mr Ali: ?n=Name&hw=group.index&k=number#group */
 const hwLinkTest = () => { try { const q = new URLSearchParams(location.search), hw = q.get("hw"), k = +q.get("k"), g = (location.hash.match(/^#([a-z0-9]+)/) || [])[1];
   if (!hw || !k || !g) return; const [sg, si] = hw.split("."), I = hwInfo(sg, +si); if (!I || !I.hw || !HKEYS[I.base]) return;
@@ -1988,7 +2002,7 @@ const hwLinkTest = () => { try { const q = new URLSearchParams(location.search),
 try { const tp = new URLSearchParams(location.search).get("t"); if (tp){ const T = JSON.parse(decodeURIComponent(escape(atob(tp.replace(/-/g, "+").replace(/_/g, "/"))))); if (T && T.r.every(r => resolveRef(r))) addTest(T) } } catch(e){}
 function formSpec(box){
   if (box.dataset.test){ const [g, n] = box.dataset.test.split("|"), T = testOf(g, +n);
-    return { qs: T.r.map(resolveRef), store: `onmaths-test-${g}-${n}`, g, i: +n - 1, type: "A", label: "Assessment", topic: T.title, mark: "Mark my test" } }
+    const store = `onmaths-test-${g}-${n}`; return { qs: T.r.map((r, j) => resolveRef(r, { store, j })), store, g, i: +n - 1, type: "A", label: "Assessment", topic: T.title, mark: "Mark my test" } }
   if (box.dataset.pap){ const P = papById(box.dataset.pap), K = papKind(P);
     return { qs: P.questions, store: `onmaths-pap-${P.id}`, g: P.group, i: papNum(P) - 1, type: K, label: K === "B" ? "Baseline paper" : "Exam paper", topic: P.title, mark: "Mark my paper" } }
   const g = box.dataset.g, i = +box.dataset.i, I = hwInfo(g, i), key = HKEYS[box.dataset.b];
@@ -2040,7 +2054,7 @@ document.addEventListener("click", e => {
   if (e.target.closest(".copy-code")){ const c = box.querySelector(".hw-code").textContent;
     try { navigator.clipboard.writeText(c).then(() => toast("Code copied."), () => { selectEl(box.querySelector(".hw-code")); toast("Press and hold the code to copy it.") }) } catch(err){ selectEl(box.querySelector(".hw-code")); toast("Press and hold the code to copy it.") } return }
   const rt = e.target.closest(".hw-retry"); if (rt){ if (!rt.dataset.sure){ rt.dataset.sure = "1"; rt.textContent = "Tap again to clear your answers"; return }
-    try { localStorage.removeItem(formSpec(box).store) } catch(err){} { const S0 = formSpec(box); if (S0.type === "H") Y4GEN.fresh(S0.g, S0.i, "H") } drawHwForm(box); toast("Cleared. Have another go!") }
+    try { localStorage.removeItem(formSpec(box).store) } catch(err){} { const S0 = formSpec(box); if (S0.type === "H") Y4GEN.fresh(S0.g, S0.i, "H"); if (S0.type === "A"){ try { localStorage.removeItem("onmaths-gseed-" + S0.store) } catch(err){} } } drawHwForm(box); toast("Cleared. Have another go!") }
 });
 /* ===== Save answers as you type, resume later, and tell Mr Ali how far they've got ===== */
 const draftInfo = box => { if (box === etBox){ const g = etBox.dataset.g, i = +etBox.dataset.i; return { key: etStoreKey(g, i) + "-d", g, i, T: "W", label: "Exit ticket", topic: topicOf(g, i), get: () => collect() } }
@@ -2674,11 +2688,15 @@ if (TEACHER){
   gEl.innerHTML = HWGROUPS.map(([id, n]) => `<option value="${id}">${n}</option>`).join("");
   function bank(g){ const out = [], seen = new Set();
     for (const [base, at] of Object.entries(baseIndex())){ if (at.g !== g || seen.has(base)) continue; seen.add(base); const I = hwInfo(at.g, at.i); I.hw.forEach((q, k) => { if (HKEYS[base][k]) out.push({ ref: `h:${base}:${k}`, topic: I.topic, q: q[0], marks: q[1], src: "Homework" }) }) }
+    try { if (PRACTICE.SETS[g]) PRACTICE.SETS[g].forEach(([t], k) => { const q = resolveRef(`g:${g}:${k}`); if (q) out.push({ ref: `g:${g}:${k}`, topic: `${t} · new numbers each time`, q: q.q, marks: 1, src: "Generated" }) }) } catch(e){}
     OPAPERS.filter(P => P.group === g && Array.isArray(P.questions)).forEach(P => P.questions.forEach((q, k) => { if (Array.isArray(q.key)) out.push({ ref: `p:${P.id}:${k}`, topic: q.topic || "Mixed", q: q.q, marks: q.marks, src: P.title }) }));
     return out }
   function topicsOfBank(B){ const m = new Map(); B.forEach(x => m.set(x.topic, (m.get(x.topic) || 0) + 1)); return [...m.entries()] }
   function fillTopics(){ const T = topicsOfBank(bank(gEl.value));
-    topEl.innerHTML = `<label class="all"><input type="checkbox" id="tbAll"> All topics</label>` + T.map(([t, c], k) => `<label><input type="checkbox" value="${esc(t)}" data-tb="${k}"> ${esc(t)} <small>(${c} questions)</small></label>`).join("");
+    const gen = T.filter(([t]) => / · new numbers each time$/.test(t)), fix = T.filter(([t]) => !/ · new numbers each time$/.test(t));
+    const row = ([t, c]) => { const k = T.findIndex(x => x[0] === t), g = / · new numbers each time$/.test(t); return `<label><input type="checkbox" value="${esc(t)}" data-tb="${k}"> ${esc(t.replace(/ · new numbers each time$/, ""))} <small>(${g ? "🔀 new numbers every attempt" : c + " questions"})</small></label>` };
+    topEl.innerHTML = `<label class="all"><input type="checkbox" id="tbAll"> All topics</label>` + (gen.length ? `<b style="margin-top:6px">🔀 Changing questions (different numbers every time)</b>` + gen.map(row).join("") + (fix.length ? `<b style="margin-top:6px">Question bank</b>` : "") : "") + fix.map(row).join("");
+    try { const stEl = document.getElementById("tbStu"); const names = (window.TB_STUDENTS || []).filter(x => x.group === gEl.value).map(x => x.name).filter(Boolean); stEl.innerHTML = `<option value="">Whole group</option>` + names.map(n => `<option>${esc(n)}</option>`).join("") + `<option value="__other">Someone else…</option>` } catch(e){}
     prev.innerHTML = ""; draft = null; renderSaved() }
   topEl.addEventListener("change", e => { if (e.target.id === "tbAll") topEl.querySelectorAll("[data-tb]").forEach(c => c.checked = e.target.checked) });
   gEl.addEventListener("change", fillTopics);
@@ -2686,11 +2704,12 @@ if (TEACHER){
   function make(){ const g = gEl.value, chosen = [...topEl.querySelectorAll("[data-tb]:checked")].map(c => c.value), per = +$("tbPer").value;
     if (!chosen.length){ st.textContent = "Tick at least one topic."; return }
     const B = bank(g), picked = [];
-    chosen.forEach(t => { const pool = shuffle(B.filter(x => x.topic === t)); const hw = pool.filter(x => x.src !== "Homework"), rest = pool.filter(x => x.src === "Homework"); picked.push(...[...hw, ...rest].slice(0, per)) });
+    chosen.forEach(t => { let pool = shuffle(B.filter(x => x.topic === t)); if (pool.length && pool[0].src === "Generated") pool = Array(per).fill(pool[0]); const hw = pool.filter(x => x.src !== "Homework"), rest = pool.filter(x => x.src === "Homework"); picked.push(...[...hw, ...rest].slice(0, per)) });
     if (picked.length > 60){ st.textContent = "That's more than 60 questions. Pick fewer topics or fewer questions per topic."; return }
-    draft = { g, title: ($("tbTitle").value.trim() || "Assessment").slice(0, 60), items: picked };
+    let who = $("tbStu").value; if (who === "__other"){ who = (prompt("Student's first name (as on their personal link):") || "").trim(); if (!who){ $("tbStu").value = ""; } }
+    draft = { g, s: who || "", title: ($("tbTitle").value.trim() || (who ? "Homework" : "Assessment")).slice(0, 60), items: picked };
     const tot = picked.reduce((a, x) => a + x.marks, 0);
-    prev.innerHTML = `<h3 class="hw-h">${esc(draft.title)} · ${esc(gname(g))}</h3><p class="tiernote">${picked.length} questions · ${tot} marks. Untick any question you don't want.</p>` +
+    prev.innerHTML = `<h3 class="hw-h">${esc(draft.title)} · ${esc(draft.s ? draft.s + " (" + gname(g) + ")" : gname(g))}</h3>${picked.some(x => x.src === "Generated") ? `<p class="tiernote">🔀 Questions marked "new numbers" are examples: the student gets different numbers each attempt.</p>` : ""}<p class="tiernote">${picked.length} questions · ${tot} marks. Untick any question you don't want.</p>` +
       picked.map((x, k) => `<div class="tb-q"><label><input type="checkbox" data-tq="${k}" checked> <b>${k + 1}.</b> ${fmt(x.q)} <small>(${x.marks} mark${x.marks > 1 ? "s" : ""} · ${esc(x.topic)})</small></label></div>`).join("") +
       `<div class="tb-btns" style="margin-top:10px"><button type="button" id="tbAgain">🔀 Different questions</button><button type="button" id="tbSave" class="et-go">Save test and get the link</button></div>`;
     st.textContent = "" }
@@ -2702,9 +2721,9 @@ if (TEACHER){
     if (!items.length){ st.textContent = "Keep at least one question."; return }
     if (!xdb){ st.textContent = "Open the teacher site in Claude while signed in to save tests."; return }
     const n = Math.max(0, ...TESTS.filter(t => t.g === draft.g).map(t => t.n)) + 1, d = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-    const T = { g: draft.g, n, title: draft.title, r: items.map(x => x.ref), d, c: new Date().toISOString() };
+    const T = { g: draft.g, n, title: draft.title, r: items.map(x => x.ref), d, c: new Date().toISOString(), ...(draft.s ? { s: draft.s } : {}) };
     st.textContent = "Saving…";
-    try { await xdb.doc(`tests/${T.g}-${T.n}`).set({ ...T, created: new Date().toISOString() }); addTest(T); prev.innerHTML = ""; draft = null; st.textContent = `Saved "${T.title}". Send the link below to your ${gname(T.g)} students.`; renderSaved(T) }
+    try { await xdb.doc(`tests/${T.g}-${T.n}`).set({ ...T, created: new Date().toISOString() }); addTest(T); prev.innerHTML = ""; draft = null; st.textContent = T.s ? `Saved "${T.title}" as homework for ${T.s}. Send ${T.s} the link below: it opens as this week's homework on their page.` : `Saved "${T.title}". Send the link below to your ${gname(T.g)} students.`; renderSaved(T) }
     catch(err){ st.textContent = "Couldn't save the test. Check your connection and try again." } });
   function renderSaved(justMade){ const g = gEl.value, L = TESTS.filter(t => t.g === g).sort((a, b) => b.n - a.n);
     savedEl.innerHTML = L.length ? `<h3 class="hw-h">Tests for ${esc(gname(g))}</h3>` + L.map(T => { const qs = T.r.map(resolveRef).filter(Boolean), tot = qs.reduce((a, q) => a + q.marks, 0), u = testLink(T);
@@ -2712,6 +2731,7 @@ if (TEACHER){
   savedEl.addEventListener("click", e => { const b = e.target.closest("[data-copy]"); if (!b) return; try { navigator.clipboard.writeText(b.dataset.copy).then(() => toast("Link copied. Send it to your students."), () => toast("Press and hold the link to copy it.")) } catch(err){ toast("Press and hold the link to copy it.") } });
   fillTopics();
   (async () => { xdb = window.claude && window.claude.use ? await window.claude.use("db").catch(() => null) : null; if (!xdb){ st.textContent = "Tests are saved when you open the teacher site in Claude while signed in."; return }
+    try { const sd = await xdb.doc("tracker/students").get(); window.TB_STUDENTS = sd.exists ? JSON.parse(JSON.stringify(sd.data().list || [])) : []; fillTopics() } catch(e){}
     try { const qs = await xdb.collection("tests").get(); qs.docs.forEach(d => addTest(JSON.parse(JSON.stringify(d.data())))); renderSaved() } catch(e){} })();
 }
 /* ===== Weekly exam papers (teacher only; listed from the site database) ===== */
@@ -2969,7 +2989,7 @@ try { tutorApply() } catch(e){ console.error(e) }
 /* ===== Year 4: new numbers every time a homework or exit ticket is tried again ===== */
 const Y4GEN = (() => {
   const rng = s => () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 };
-  let R = Math.random;
+  let R = () => Math.random();
   const ri = (a, b) => a + Math.floor(R() * (b - a + 1));
   const pick = a => a[Math.floor(R() * a.length)];
   const f = n => { const s = String(Math.abs(n)); return (n < 0 ? "−" : "") + (s.length > 3 ? s.slice(0, -3) + " " + s.slice(-3) : s) };
@@ -3055,7 +3075,7 @@ const Y4GEN = (() => {
     R = rng(+s);
     if (t === "H"){ const W = HWX.y4.weeks[i], b = HWXB.y4 && HWXB.y4[i]; if (!W || !b || !HKEYS[b]) return; const out = G.hw.map(g => g()); W.hw = out.map(q => q.slice(0, 3)); HKEYS[b] = out.map(q => q[3]) }
     else { if (!ETX.y4 || !ETX.y4[i] || !KEYS.y4 || !KEYS.y4[i]) return; const out = G.et.map(g => g()); ETX.y4[i] = out.map(q => q.slice(0, 3)); KEYS.y4[i] = out.map(q => q[3]) }
-    R = Math.random;
+    R = () => Math.random();
   }
   const has = (g, i) => g === "y4" && !!T[i];
   return { init(){ Object.keys(T).forEach(i => { try { apply(+i, "H"); apply(+i, "W") } catch(e){ console.error(e) } }) }, fresh(g, i, t){ if (has(g, i)) try { apply(i, t, true) } catch(e){ console.error(e) } }, T };
