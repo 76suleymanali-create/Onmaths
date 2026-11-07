@@ -682,6 +682,17 @@ footer b{color:var(--ink);font-family:var(--display)}
     </div>
   </section>
 
+  <section id="practice" style="padding-top:0" hidden>
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Practice · marked instantly · new questions every time</div>
+        <h2>Practice session</h2>
+        <p>10 questions on what we've covered in lessons plus the Year 4 basics you need to know. Tap Mark my answers, then New questions for a fresh set.</p>
+      </div>
+      <div id="prBox" class="et-box"></div>
+    </div>
+  </section>
+
   <section id="y11hw" style="padding-top:0">
     <div class="wrap">
       <div class="sec-head">
@@ -2148,7 +2159,7 @@ function setGroup(id, scroll){
   groupPills.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.id === id));
   document.getElementById("mgNote").textContent = `Showing ${gname(id)}. This phone will remember it.`;
   document.querySelectorAll(".gsel").forEach(x => { if (!x.options.length) x.innerHTML = HWGROUPS.map(([gid, n]) => `<option value="${gid}">${n}</option>`).join(""); x.value = id });
-  showWeek(id); renderHw(id); renderExit(id); renderStarter(id); renderVideo(id);
+  showWeek(id); renderHw(id); renderExit(id); renderStarter(id); renderVideo(id); try { PRACTICE.render(id) } catch(e){ console.error(e) }
   if (isY11(id)) renderScheme(id);
   if (scroll) document.getElementById("starter").scrollIntoView({ behavior: "smooth" });
 }
@@ -2982,13 +2993,13 @@ const Y4GEN = (() => {
   T[32] = { hw: [
     () => { const t = ri(1, 9), h = ri(1, 9), o = ri(1, 9), n = t * 1000 + h * 100 + o, w = `${W1[t]} thousand, ${W1[h]} hundred and ${W1[o]}`;
       return [`Write ${f(n)} in words.`, 1, w, [["s", [w, `${W1[t]} thousand ${W1[h]} hundred and ${W1[o]}`, `${W1[t]} thousand ${W1[h]} hundred ${W1[o]}`, `${W1[t]} thousand, ${W1[h]} hundred ${W1[o]}`], "In words"]]] },
-    () => { const d = [ri(1, 9), ri(0, 9), ri(0, 9), ri(0, 9)], p = ri(0, 2); d[p] = ri(1, 9); const n = +d.join(""), v = d[p] * [1000, 100, 10][p]; return [`What is the value of the ${d[p]} in ${f(n)}?`, 1, f(v), N(v)] },
+    () => { let d, p; do { d = [ri(1, 9), ri(0, 9), ri(0, 9), ri(0, 9)]; p = ri(0, 2); d[p] = ri(1, 9) } while (d.filter(x => x === d[p]).length > 1); const n = +d.join(""), v = d[p] * [1000, 100, 10][p]; return [`What is the value of the ${d[p]} in ${f(n)}?`, 1, f(v), N(v)] },
     () => { let n; do { n = ri(1100, 9800) } while (n % 100 === 50); const r = Math.round(n / 100) * 100; return [`Round ${f(n)} to the nearest 100.`, 1, f(r), N(r)] },
     () => { const t = ri(2, 8); let x, y; do { x = ri(1, 9); y = ri(1, 9) } while (x === y); const L = [[x, y, 0], [x, 0, y], [y, x, 0], [0, x, y]].map(a => t * 1000 + +a.join("")), s = [...L].sort((a, b) => a - b);
       return [`Put in order, smallest first: ${L.map(f).join(", ")}`, 2, s.map(f).join(", "), [["s", [s.join(",")], "Smallest first, with commas"]]] },
     () => { const n = ri(1100, 8900); return [`What is 1 000 more than ${f(n)}?`, 1, f(n + 1000), N(n + 1000)] }],
     et: [
-    () => { const t = ri(1, 9), n = t * 1000 + ri(100, 999); return [`What is the value of the ${t} in ${f(n)}?`, 1, f(t * 1000), N(t * 1000)] },
+    () => { let t, n; do { t = ri(1, 9); n = t * 1000 + ri(100, 999) } while (String(n).split(String(t)).length > 2); return [`What is the value of the ${t} in ${f(n)}?`, 1, f(t * 1000), N(t * 1000)] },
     () => { let n; do { n = ri(1100, 9800) } while (n % 10 === 5 || n % 10 === 0); const r = Math.round(n / 10) * 10; return [`Round ${f(n)} to the nearest 10.`, 1, f(r), N(r)] },
     () => { const n = ri(2, 9) * 1000 + ri(1, 9) * 10; return [`What number is 100 less than ${f(n)}?`, 1, f(n - 100), N(n - 100)] }] };
   T[33] = { hw: [
@@ -3049,6 +3060,64 @@ const Y4GEN = (() => {
   return { init(){ Object.keys(T).forEach(i => { try { apply(+i, "H"); apply(+i, "W") } catch(e){ console.error(e) } }) }, fresh(g, i, t){ if (has(g, i)) try { apply(i, t, true) } catch(e){ console.error(e) } }, T };
 })();
 try { if (!TEACHER) Y4GEN.init() } catch(e){ console.error(e) }
+/* ===== Year 4 practice session: 10 marked questions, new every time ===== */
+const PRACTICE = (() => {
+  const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1)), pick = a => a[Math.floor(Math.random() * a.length)];
+  const T = Y4GEN.T, G = (i, t, k) => () => T[i][t][k]();
+  const sq = (v, l) => [["num", v, l || "Squares"]];
+  const areaRows = () => { const n = ri(2, 4), r = Array.from({ length: n }, () => ri(2, 7)), a = r.reduce((x, y) => x + y, 0);
+    return [`A shape on squared paper has rows of ${r.slice(0, -1).join(", ")} and ${r[n - 1]} squares. What is its area?`, 1, `${r.join(" + ")} = ${a} squares`, sq(a)] };
+  const areaHalf = () => { const w = ri(4, 12), h = 2 * ri(1, 4); return [`A shape has ${w} whole squares and ${h} half squares. What is its area?`, 1, `${w} + ${h / 2} = ${w + h / 2} squares`, sq(w + h / 2)] };
+  const areaCmp = () => { let a, b, c, d; do { a = ri(2, 6); b = ri(2, 6); c = ri(2, 6); d = ri(2, 6) } while (a * b === c * d && Math.random() < .8); const ans = a * b > c * d ? "Shape A" : a * b < c * d ? "Shape B" : "Same";
+    return [`Shape A is ${a} squares by ${b} squares. Shape B is ${c} squares by ${d} squares. Which has the bigger area?`, 1, `${ans} (A = ${a * b}, B = ${c * d})`, [["mc", ans, "Choose", ["Shape A", "Shape B", "Same"]]]] };
+  const areaCut = () => { const a = ri(4, 7), b = ri(3, 5), c = ri(1, 2), d = ri(1, 2); return [`A ${a} by ${b} rectangle of squares has a ${c} by ${d} piece cut from one corner. What is its area?`, 1, `${a * b} − ${c * d} = ${a * b - c * d} squares`, sq(a * b - c * d)] };
+  const tab = () => { const t = pick([3, 4, 6, 7, 8, 9, 11, 12]), k = ri(2, 12); return [`${t} × ${k}`, 1, String(t * k), [["num", t * k]]] };
+  const div = () => { const t = pick([3, 4, 6, 7, 8, 9, 12]), k = ri(2, 12); return [`${t * k} ÷ ${t}`, 1, String(k), [["num", k]]] };
+  const one = q => { q = q.slice(); q[1] = 1; return q };
+  const SLOTS = [
+    ["Adding 4-digit numbers", [G(0, "hw", 1)]],
+    ["Subtracting 4-digit numbers", [G(0, "et", 1), G(0, "hw", 3)]],
+    ["Area: counting squares", [areaRows, areaHalf]],
+    ["Area: rectilinear shapes", [areaCmp, areaCut]],
+    ["Place value and rounding", [G(32, "hw", 1), G(32, "hw", 2), G(32, "hw", 4), G(32, "et", 1), G(32, "et", 2)]],
+    ["Times tables", [tab]],
+    ["Division facts", [div]],
+    ["Multiplying by a 1-digit number", [G(36, "hw", 1), G(36, "hw", 2), G(36, "et", 0)]],
+    ["Division with remainders", [G(37, "et", 1), G(37, "hw", 4), G(37, "et", 2)]],
+    ["Fractions and perimeter", [G(39, "hw", 0), G(39, "hw", 2), G(39, "hw", 4), G(39, "et", 2), G(38, "hw", 2), G(38, "et", 1)]]];
+  let cur = null, done = false;
+  const box = () => document.getElementById("prBox");
+  function make(){ cur = SLOTS.map(([topic, fs]) => { const q = one(pick(fs)()); return { topic, q: q[0], marks: 1, ans: q[2], key: q[3] } }); done = false; draw() }
+  function draw(){
+    const B = box(); if (!B) return;
+    let h = `<p class="tiernote" style="margin:0">10 questions · 1 mark each · do your working on paper</p>`;
+    h += cur.map((q, k) => `<div class="etq"><div class="qt">${k + 1}. ${fmt(q.q)} <span class="mk">· ${esc(q.topic)}</span></div>` + q.key.map((part, j) => {
+      const id = `pr-${k}-${j}`, lab = part[2] ? `<label for="${id}">${esc(part[2])}</label>` : `<label for="${id}" class="sr">Answer</label>`;
+      if (part[0] === "mc") return `<div class="etp" role="group" aria-label="${esc(part[2] || "Choose")}">${part[3].map(o => `<button type="button" class="opt propt" data-k="${k}" data-j="${j}" data-v="${esc(o)}" aria-pressed="false">${esc(o)}</button>`).join("")}</div>`;
+      return `<div class="etp">${lab}<input id="${id}" data-k="${k}" data-j="${j}" type="text" inputmode="${part[0] === "num" ? "decimal" : "text"}" autocomplete="off" autocapitalize="off" spellcheck="false"></div>`;
+    }).join("") + `<div class="res" hidden></div></div>`).join("");
+    h += `<button type="button" class="et-go pr-mark">Mark my answers</button><button type="button" class="et-retry pr-new">↻ New questions</button><div class="pr-result"></div>`;
+    B.innerHTML = h;
+  }
+  function mark(){
+    const B = box(); let got = 0;
+    const val = (k, j) => { const o = B.querySelector(`.propt[data-k="${k}"][data-j="${j}"][aria-pressed="true"]`); if (o) return o.dataset.v; const i = B.querySelector(`input[data-k="${k}"][data-j="${j}"]`); return i ? i.value : "" };
+    if (cur.every((q, k) => q.key.every((_, j) => !String(val(k, j)).trim()))){ toast("Answer at least one question first."); return }
+    B.querySelectorAll(".etq").forEach((el, k) => { const q = cur[k], ok = q.key.every((p, j) => MK.check(p, val(k, j))), r = el.querySelector(".res"); if (ok) got++;
+      r.hidden = false; r.className = "res " + (ok ? "ok" : "no"); r.innerHTML = ok ? "✓ Correct" : `✗ Not quite<br>Answer: <span>${fmt(q.ans)}</span>` });
+    B.querySelectorAll("input[data-k], .propt").forEach(x => x.disabled = true); const mb = B.querySelector(".pr-mark"); if (mb) mb.remove();
+    const weak = cur.filter((q, k) => B.querySelectorAll(".etq")[k].querySelector(".res.no")).map(q => q.topic);
+    B.querySelector(".pr-result").innerHTML = `<div class="et-result"><div class="score">${got} / 10</div><div>${got === 10 ? "Brilliant, full marks!" : got >= 7 ? "Well done! Check the answers above, then try a new set." : "Good try. Look at the answers above, then have another go with new questions."}</div>${weak.length ? `<div class="tiernote" style="color:inherit;opacity:.9">Practise: ${[...new Set(weak)].map(esc).join(", ")}</div>` : ""}<button type="button" class="et-retry pr-new">↻ New questions</button></div>`;
+    try { const H = JSON.parse(localStorage.getItem("onmaths-practice-y4") || "[]"); H.push({ d: new Date().toISOString(), s: got }); localStorage.setItem("onmaths-practice-y4", JSON.stringify(H.slice(-30))) } catch(e){}
+    done = true; B.querySelector(".pr-result").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+  document.addEventListener("click", e => { const B = box(); if (!B || !B.contains(e.target)) return;
+    const o = e.target.closest(".propt"); if (o && !o.disabled){ B.querySelectorAll(`.propt[data-k="${o.dataset.k}"][data-j="${o.dataset.j}"]`).forEach(b => b.setAttribute("aria-pressed", b === o)); return }
+    if (e.target.closest(".pr-mark")){ mark(); return }
+    if (e.target.closest(".pr-new")){ make(); document.getElementById("practice").scrollIntoView({ behavior: "smooth" }); toast("New questions. Good luck!") } });
+  return { get cur(){ return cur }, render(g){ const sec = document.getElementById("practice"); if (!sec) return; sec.hidden = g !== "y4"; if (g === "y4" && !cur) make() }, make, SLOTS };
+})();
+
 
 try { if (!TEACHER) hwLinkTest() } catch(e){}
 try { borrowLater() } catch(e){}
@@ -3077,7 +3146,7 @@ function lockSite(g){
   try { localStorage.setItem("onmaths-lock", g) } catch(e){}
   LOCKED = true;
   { const rh = renderHw; renderHw = gid => { rh(gid); studentWeekView(gid) } }
-  if (!fromLink) setGroup(g, false); else renderHw(g);
+  if (!fromLink) setGroup(g, false); else renderHw(g); try { PRACTICE.render(g) } catch(e){}
   setTimeout(() => { const t = document.getElementById(location.hash.startsWith("#report=") ? "y11hw" : new URLSearchParams(location.search).get("t") ? "paplist" : "video"); if (t && fromLink) t.scrollIntoView({ behavior: "smooth" }) }, 50);
   hide(".gbar"); hide("#groupPills"); hide(".picker");
   const setP = (sel, t) => { const el = document.querySelector(sel); if (el) el.textContent = t };
@@ -3088,7 +3157,7 @@ function lockSite(g){
   if (Y11G(g)){ document.querySelectorAll("#year11 .tabs button").forEach(b => { if (b.dataset.id !== g) b.hidden = true }); try { renderScheme(g) } catch(e){} }
   if (h1) h1.innerHTML = `${esc(gname(g))}: <span class="mark">your maths</span>`;
   if (hp) hp.textContent = "Three things to do: watch the 2-minute video, do your homework, then complete the exit ticket.";
-  if (hb) hb.innerHTML = `<a class="btn primary" href="#video">Watch the video →</a><a class="btn" href="#y11hw">My homework</a><a class="btn" href="#exit">Exit ticket</a>`;
+  if (hb) hb.innerHTML = `<a class="btn primary" href="#video">Watch the video →</a><a class="btn" href="#y11hw">My homework</a><a class="btn" href="#exit">Exit ticket</a>${g === "y4" ? `<a class="btn" href="#practice">Practice</a>` : ""}`;
   { const ex = document.getElementById("exit"), hw = document.getElementById("y11hw"); if (ex && hw) ex.parentNode.insertBefore(hw, ex) }
   if (nav){ const a = [...nav.querySelectorAll("a")], v = a.find(x => x.getAttribute("href") === "#video"), hwl = a.find(x => x.getAttribute("href") === "#y11hw"), exl = a.find(x => x.getAttribute("href") === "#exit"); if (v && hwl && exl){ nav.appendChild(v); nav.appendChild(hwl); nav.appendChild(exl) } }
 }
