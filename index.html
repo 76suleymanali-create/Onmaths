@@ -688,7 +688,7 @@ footer b{color:var(--ink);font-family:var(--display)}
       <div class="sec-head">
         <div class="eyebrow">Practice · marked instantly · new questions every time</div>
         <h2>Practice session</h2>
-        <p>10 questions on what we've covered in lessons plus the Year 4 basics you need to know. Tap Mark my answers, then New questions for a fresh set.</p>
+        <p id="prIntro">10 questions on what we've covered in lessons plus the basics you need to know. Tap Mark my answers, then New questions for a fresh set.</p>
       </div>
       <div id="prBox" class="et-box"></div>
     </div>
@@ -3075,7 +3075,7 @@ const PRACTICE = (() => {
   const tab = () => { const t = pick([3, 4, 6, 7, 8, 9, 11, 12]), k = ri(2, 12); return [`${t} × ${k}`, 1, String(t * k), [["num", t * k]]] };
   const div = () => { const t = pick([3, 4, 6, 7, 8, 9, 12]), k = ri(2, 12); return [`${t * k} ÷ ${t}`, 1, String(k), [["num", k]]] };
   const one = q => { q = q.slice(); q[1] = 1; return q };
-  const SLOTS = [
+  const SETS = {}; SETS.y4 = [
     ["Adding 4-digit numbers", [G(0, "hw", 1)]],
     ["Subtracting 4-digit numbers", [G(0, "et", 1), G(0, "hw", 3)]],
     ["Area: counting squares", [areaRows, areaHalf]],
@@ -3086,9 +3086,57 @@ const PRACTICE = (() => {
     ["Multiplying by a 1-digit number", [G(36, "hw", 1), G(36, "hw", 2), G(36, "et", 0)]],
     ["Division with remainders", [G(37, "et", 1), G(37, "hw", 4), G(37, "et", 2)]],
     ["Fractions and perimeter", [G(39, "hw", 0), G(39, "hw", 2), G(39, "hw", 4), G(39, "et", 2), G(38, "hw", 2), G(38, "et", 1)]]];
-  let cur = null, done = false;
+  /* --- AQA Level 2 Further Maths --- */
+  const nz = (a, b) => { let v; do { v = ri(a, b) } while (!v); return v };
+  const gcd = (a, b) => b ? gcd(b, a % b) : Math.abs(a);
+  const sgn = (n, first) => n < 0 ? (first ? "−" : " − ") : (first ? "" : " + ");
+  const poly = (cs, v = "x") => { const d = cs.length - 1; let out = "", key = "";
+    cs.forEach((c, k) => { const p = d - k; if (!c) return; const a = Math.abs(c), first = !out;
+      const coef = (a === 1 && p > 0) ? "" : String(a), vv = p === 0 ? "" : p === 1 ? v : `${v}^{${p}}`;
+      out += sgn(c, first) + coef + vv; key += (c < 0 ? "-" : (first ? "" : "+")) + coef + (p === 0 ? "" : p === 1 ? v : `${v}^${p}`) });
+    return [out || "0", key || "0"] };
+  const br = (a, v = "x", p = 1) => `(${p === 1 ? "" : p}${v} ${a < 0 ? "−" : "+"} ${Math.abs(a)})`;
+  const brk = (a, v = "x", p = 1) => `(${p === 1 ? "" : p}${v}${a < 0 ? "-" : "+"}${Math.abs(a)})`;
+  const surd = () => { const m = pick([2, 3, 5, 6, 7, 10]), k = ri(2, 6), t = Math.random();
+    if (t < .4) return [`Simplify √${k * k * m}`, 1, `${k}√${m}`, [["s", [`${k}√${m}`, `${k}*√${m}`], "Answer (e.g. 3√5)"]]];
+    if (t < .75){ const a = m * k; return [`Rationalise the denominator: ${a}/√${m}`, 1, `${k}√${m}`, [["s", [`${k}√${m}`, `${k}*√${m}`], "Answer (e.g. 3√5)"]]] }
+    const a = ri(2, 7); return [`Expand and simplify (${a} + √${m})(${a} − √${m})`, 1, String(a * a - m), [["num", a * a - m]]] };
+  const triple = () => { let a, b, c; do { a = nz(-5, 5); b = nz(-5, 5); c = nz(-5, 5) } while (a === b && b === c);
+    const [o, k] = poly([1, a + b + c, a * b + b * c + c * a, a * b * c]); return [`Expand and simplify ${br(a)}${br(b)}${br(c)}`, 1, o, [["simp", k]]] };
+  const facq = () => { let p, q, r; do { p = ri(2, 5); q = nz(-7, 7); r = nz(-7, 7) } while (gcd(p, q) !== 1);
+    const [o] = poly([p, p * r + q, q * r]); return [`Factorise fully ${o}`, 1, `${br(q, "x", p)}${br(r)}`, [["fac", `${brk(q, "x", p)}${brk(r)}`]]] };
+  const algfrac = () => { let a, b, c; do { a = nz(-6, 6); b = nz(-6, 6); c = nz(-6, 6) } while (a === b || b === c || a === c);
+    const [n] = poly([1, a + b, a * b]), [d] = poly([1, a + c, a * c]);
+    return [`Simplify fully (${n}) / (${d})`, 1, `${br(b)}/${br(c)}`, [["simp", `${brk(b)}/${brk(c)}`]]] };
+  const indices = () => { const [s0, r] = pick([[2, 2], [3, 2], [4, 2], [5, 2], [6, 2], [7, 2], [2, 3], [3, 3], [4, 3], [5, 3], [2, 4], [3, 4], [2, 5]]), b = s0 ** r, t = Math.random();
+    if (t < .4){ const p = ri(2, 3); return [`Work out ${b}^{${p}/${r}}`, 1, String(s0 ** p), [["num", s0 ** p]]] }
+    if (t < .75) return [`Work out ${b}^{−1/${r}}`, 1, `1/${s0}`, [["num", 1 / s0]]];
+    return [`Work out ${b}^{−${2}/${r}}`, 1, `1/${s0 * s0}`, [["num", 1 / (s0 * s0)]]] };
+  const rearr = () => { const a = ri(2, 7), b = ri(1, 9), c = ri(2, 5), t = Math.random();
+    if (t < .5) return [`Make x the subject of y = (${a}x + ${b}) / ${c}`, 1, `x = (${c}y − ${b}) / ${a}`, [["simp", `(${c}*y-${b})/${a}`, "x ="]]];
+    if (a === b) return rearr();
+    return [`Make x the subject of ${a}(x − y) = ${b}x + ${c}`, 1, `x = (${a}y + ${c}) / ${a - b === 0 ? 1 : a - b}`, a === b ? [["simp", `${a}*y+${c}`, "x ="]] : [["simp", `(${a}*y+${c})/(${a - b})`, "x ="]]] };
+  const ctsq = () => { const p = nz(-6, 6), c = ri(-12, 15), [o] = poly([1, 2 * p, c]), q = c - p * p;
+    return [`Write ${o} in the form (x + p)^{2} + q. Give p and q.`, 1, `(x ${p < 0 ? "−" : "+"} ${Math.abs(p)})^{2} ${q < 0 ? "−" : "+"} ${Math.abs(q)}, so p = ${p}, q = ${q}`, [["num", p, "p"], ["num", q, "q"]]] };
+  const qineq = () => { let a, b; do { a = ri(-7, 7); b = ri(-7, 7) } while (a >= b); const [o] = poly([1, -(a + b), a * b]);
+    if (Math.random() < .5) return [`Solve ${o} < 0. Give your answer as ☐ < x < ☐`, 1, `${a} < x < ${b}`, [["num", a, "Lower"], ["num", b, "Upper"]]];
+    return [`Solve ${o} > 0. Give your answer as x < ☐ or x > ☐`, 1, `x < ${a} or x > ${b}`, [["num", a, "x <"], ["num", b, "x >"]]] };
+  const linsolve = () => { let a, c; do { a = ri(2, 9); c = ri(1, 8) } while (a === c); const x = nz(-6, 9), b = ri(-12, 12), d = a * x + b - c * x;
+    return [`Solve ${a}x ${b < 0 ? "−" : "+"} ${Math.abs(b)} = ${c}x ${d < 0 ? "−" : "+"} ${Math.abs(d)}`, 1, `x = ${x}`, [["num", x, "x ="]]] };
+  const gcseAlg = () => { const t = Math.random();
+    if (t < .35){ const a = ri(2, 5), b = nz(-6, 6), c = ri(2, 4), d = nz(-6, 6), [o, k] = poly([a - c, -a * b + c * d]);
+      return [`Expand and simplify ${a}(x ${b < 0 ? "+" : "−"} ${Math.abs(b)}) − ${c}(x ${d < 0 ? "+" : "−"} ${Math.abs(d)})`, 1, o, [["simp", k]]] }
+    if (t < .7){ const d = nz(-6, 7), f = ri(-5, 12), seq = [1, 2, 3, 4].map(n => d * n + f), [o, k] = poly([d, f], "n");
+      return [`Find the nth term of ${seq.join(", ")}, …`, 1, o, [["simp", k]]] }
+    const x1 = ri(-5, 5), y1 = ri(-5, 5), dx = nz(-4, 4), m = nz(-4, 4), x2 = x1 + dx, y2 = y1 + m * dx;
+    return [`Find the gradient of the line through (${x1}, ${y1}) and (${x2}, ${y2})`, 1, String(m), [["num", m]]] };
+  SETS.y11fm = [
+    ["Surds", [surd]], ["Expanding three brackets", [triple]], ["Factorising quadratics", [facq]], ["Algebraic fractions", [algfrac]],
+    ["Fractional and negative indices", [indices]], ["Rearranging formulae", [rearr]], ["Completing the square", [ctsq]], ["Quadratic inequalities", [qineq]],
+    ["GCSE basics: solving equations", [linsolve]], ["GCSE basics: algebra and graphs", [gcseAlg]]];
+  let cur = null, done = false, pg = "y4";
   const box = () => document.getElementById("prBox");
-  function make(){ cur = SLOTS.map(([topic, fs]) => { const q = one(pick(fs)()); return { topic, q: q[0], marks: 1, ans: q[2], key: q[3] } }); done = false; draw() }
+  function make(){ cur = SETS[pg].map(([topic, fs]) => { const q = one(pick(fs)()); return { topic, q: q[0], marks: 1, ans: q[2], key: q[3] } }); done = false; draw() }
   function draw(){
     const B = box(); if (!B) return;
     let h = `<p class="tiernote" style="margin:0">10 questions · 1 mark each · do your working on paper</p>`;
@@ -3109,14 +3157,14 @@ const PRACTICE = (() => {
     B.querySelectorAll("input[data-k], .propt").forEach(x => x.disabled = true); const mb = B.querySelector(".pr-mark"); if (mb) mb.remove();
     const weak = cur.filter((q, k) => B.querySelectorAll(".etq")[k].querySelector(".res.no")).map(q => q.topic);
     B.querySelector(".pr-result").innerHTML = `<div class="et-result"><div class="score">${got} / 10</div><div>${got === 10 ? "Brilliant, full marks!" : got >= 7 ? "Well done! Check the answers above, then try a new set." : "Good try. Look at the answers above, then have another go with new questions."}</div>${weak.length ? `<div class="tiernote" style="color:inherit;opacity:.9">Practise: ${[...new Set(weak)].map(esc).join(", ")}</div>` : ""}<button type="button" class="et-retry pr-new">↻ New questions</button></div>`;
-    try { const H = JSON.parse(localStorage.getItem("onmaths-practice-y4") || "[]"); H.push({ d: new Date().toISOString(), s: got }); localStorage.setItem("onmaths-practice-y4", JSON.stringify(H.slice(-30))) } catch(e){}
+    try { const H = JSON.parse(localStorage.getItem("onmaths-practice-" + pg) || "[]"); H.push({ d: new Date().toISOString(), s: got }); localStorage.setItem("onmaths-practice-" + pg, JSON.stringify(H.slice(-30))) } catch(e){}
     done = true; B.querySelector(".pr-result").scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
   document.addEventListener("click", e => { const B = box(); if (!B || !B.contains(e.target)) return;
     const o = e.target.closest(".propt"); if (o && !o.disabled){ B.querySelectorAll(`.propt[data-k="${o.dataset.k}"][data-j="${o.dataset.j}"]`).forEach(b => b.setAttribute("aria-pressed", b === o)); return }
     if (e.target.closest(".pr-mark")){ mark(); return }
     if (e.target.closest(".pr-new")){ make(); document.getElementById("practice").scrollIntoView({ behavior: "smooth" }); toast("New questions. Good luck!") } });
-  return { get cur(){ return cur }, render(g){ const sec = document.getElementById("practice"); if (!sec) return; sec.hidden = g !== "y4"; const na = document.getElementById("navPractice"); if (na) na.hidden = g !== "y4"; if (g === "y4" && !cur) make() }, make, SLOTS };
+  return { get cur(){ return cur }, render(g){ const sec = document.getElementById("practice"); if (!sec) return; const on = !!SETS[g]; sec.hidden = !on; const na = document.getElementById("navPractice"); if (na) na.hidden = !on; if (on && (!cur || pg !== g)){ pg = g; make() } }, make, SETS, has: g => !!SETS[g] };
 })();
 
 
@@ -3148,7 +3196,7 @@ function lockSite(g){
   LOCKED = true;
   { const rh = renderHw; renderHw = gid => { rh(gid); studentWeekView(gid) } }
   if (!fromLink) setGroup(g, false); else renderHw(g); try { PRACTICE.render(g) } catch(e){}
-  setTimeout(() => { const t = document.getElementById(location.hash.startsWith("#report=") ? "y11hw" : new URLSearchParams(location.search).get("t") ? "paplist" : (new URLSearchParams(location.search).get("p") && g === "y4") ? "practice" : "video"); if (t && fromLink) t.scrollIntoView({ behavior: "smooth" }) }, 50);
+  setTimeout(() => { const t = document.getElementById(location.hash.startsWith("#report=") ? "y11hw" : new URLSearchParams(location.search).get("t") ? "paplist" : (new URLSearchParams(location.search).get("p") && PRACTICE.has(g)) ? "practice" : "video"); if (t && fromLink) t.scrollIntoView({ behavior: "smooth" }) }, 50);
   hide(".gbar"); hide("#groupPills"); hide(".picker");
   const setP = (sel, t) => { const el = document.querySelector(sel); if (el) el.textContent = t };
   setP("#week .sec-head p", "Last week, this week and next week's topic.");
@@ -3158,7 +3206,7 @@ function lockSite(g){
   if (Y11G(g)){ document.querySelectorAll("#year11 .tabs button").forEach(b => { if (b.dataset.id !== g) b.hidden = true }); try { renderScheme(g) } catch(e){} }
   if (h1) h1.innerHTML = `${esc(gname(g))}: <span class="mark">your maths</span>`;
   if (hp) hp.textContent = "Three things to do: watch the 2-minute video, do your homework, then complete the exit ticket.";
-  if (hb) hb.innerHTML = `<a class="btn primary" href="#video">Watch the video →</a><a class="btn" href="#y11hw">My homework</a><a class="btn" href="#exit">Exit ticket</a>${g === "y4" ? `<a class="btn" href="#practice">Practice</a>` : ""}`;
+  if (hb) hb.innerHTML = `<a class="btn primary" href="#video">Watch the video →</a><a class="btn" href="#y11hw">My homework</a><a class="btn" href="#exit">Exit ticket</a>${PRACTICE.has(g) ? `<a class="btn" href="#practice">Practice</a>` : ""}`;
   { const ex = document.getElementById("exit"), hw = document.getElementById("y11hw"); if (ex && hw) ex.parentNode.insertBefore(hw, ex) }
   if (nav){ const a = [...nav.querySelectorAll("a")], v = a.find(x => x.getAttribute("href") === "#video"), hwl = a.find(x => x.getAttribute("href") === "#y11hw"), exl = a.find(x => x.getAttribute("href") === "#exit"); if (v && hwl && exl){ nav.appendChild(v); nav.appendChild(hwl); nav.appendChild(exl) } }
 }
