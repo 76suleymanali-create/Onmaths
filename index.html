@@ -2126,10 +2126,18 @@ function renderPapers(g){
     return `<details class="hwk${k === 0 ? " current" : ""}"${k === 0 && !TEACHER ? " open" : ""}><summary><span class="num">${papKind(P) === "B" ? "Baseline" : "Paper"}</span><span class="dt">${esc(P.week || "")}</span><span class="tp">${esc(P.title)}${TEACHER ? " · " + esc(P.student) : ""}</span><span class="status ready">${P.calc ? "Calculator" : "Non-calculator"}</span></summary><div class="hwbody"><p class="tiernote" style="margin:4px 0 8px">${P.questions.length} questions · ${tot} marks · 1 hour · ${P.calc ? "you may use a calculator" : "no calculator"}</p><div class="hwon" data-pap="${esc(P.id)}"><button type="button" class="hw-open">👉 Press here to start this paper</button><div class="hwform" hidden></div></div></div></details>`;
   }).join("") : "");
 }
+/* Homework follows each student's lesson: it switches to the new topic straight after their timetabled lesson ends (day: 0 Sun … 6 Sat, end time). */
+const LESSON_TT = { leo: [6, "19:00"], alex: [6, "19:00"], deniz: [6, "19:00"], nicholas: [1, "18:00"], amelia: [1, "18:00"], mia: [2, "19:00"], isabella: [3, "19:00"], tia: [4, "19:00"], toby: [4, "19:00"], luca: [4, "19:00"], sienna: [5, "19:00"] };
+function idxForWeek(g, k){ if (k < 0) return -1; if (Y11G(g)) return k < DATES.length ? k : -1; if (WEEKPLAN[g]) return k < WEEKPLAN[g].length ? WEEKPLAN[g][k] : -1; if (isSch(g)) return k; return curLessonIdx(g) }
+function hwLessonIdx(g){
+  const nm = (myName() || "").trim().toLowerCase().split(/\s+/)[0], tt = LESSON_TT[nm]; if (!tt) return curLessonIdx(g);
+  const dates = Y11G(g) ? DATES : SOW_D, base = Y11G(g) ? CUR : SCUR; if (!dates[base]) return curLessonIdx(g);
+  const end = new Date(dates[base] + "T00:00"); end.setDate(end.getDate() + (tt[0] === 0 ? 6 : tt[0] - 1)); const [h, m] = tt[1].split(":").map(Number); end.setHours(h, m, 0, 0);
+  const i = idxForWeek(g, new Date() < end ? base - 1 : base); return i >= 0 ? i : curLessonIdx(g) }
 /* Student page: only this week's work. 1) homework Mr Ali has set (a recent test), otherwise this week's topic homework; 2) this week's exam paper. */
 function studentWeekView(g){
   if (!LOCKED || !hwlist) return;
-  const T = recentTest(g), ci = curLessonIdx(g), I = ci >= 0 ? hwInfo(g, ci) : null, wk = I && I.hw && HKEYS[I.base];
+  const T = recentTest(g), ci = hwLessonIdx(g), I = ci >= 0 ? hwInfo(g, ci) : null, wk = I && I.hw && HKEYS[I.base];
   const L = papersFor(g), W = L.filter(P => papKind(P) === "P").sort((a, b) => papNum(b) - papNum(a))[0], P = W || L.find(x => papKind(x) === "B");
   const sec = (title, body) => `<h3 class="hw-h">${title}</h3>` + body;
   let h = "";
